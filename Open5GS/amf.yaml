@@ -1,6 +1,7 @@
 logger:
   file:
     path: /var/log/open5gs/amf.log
+    level: debug
 #  level: info   # fatal|error|warn|info(default)|debug|trace
 
 global:
@@ -23,7 +24,7 @@ amf:
       - address: 192.168.0.67
   metrics:
     server:
-      - address: 127.0.0.5
+      - address: 0.0.0.0
         port: 9090
   guami:
     - plmn_id:
