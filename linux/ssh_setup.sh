@@ -12,6 +12,12 @@ sudo apt-get install -y curl wget git vim htop net-tools unzip
 # Change to norwegian keyboard
 sudo loadkeys no
 
+# Install OpenSSH Server if not already installed
+if ! dpkg -l | grep -q openssh-server; then
+  echo "Installing OpenSSH Server..."
+  sudo apt update && sudo apt install -y openssh-server
+fi
+
 # Variables
 SSH_USER="ubuntu" # Default user (adjust if needed)
 SSH_KEY1="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDSOEhyJ6KPA8dA8ySKhHRpbNMIdnIq5jSg7JiaBzoQlbGHv/miUun0GOsFjbLq42Iv8YWbQGQh4NpSklwF4yrW3Iw2KzRhK52ns9jnAHqygXDiE3hNykspbj+LDlR0aCKelUlpoINYfWJRJRr9YRYIKTo43fTIek8Ehx3eGrbPYyDcBGt9ZYHct+doiWyWtKronsOWp+5QBljXnDC5i31IO6me96hRvLmPrJuSa+Nh6DbnqBjz3VBf/Y/0l61ocCku8iSS0HrOoh8GPzQOzFRGGIUZzcM27Yb2YezPsle+VHVuylpeD59f5Y5PcPI9QMAXsRe6xBO8SjtPOBIDAZ1ZWPI5zT+DqITTAZvyIFfl+KMgPQTEnt9rVBo9g3g90Qr9QcMEGwkLyGQuGxhxguCLAWKACH76XAt0bYyGSi7/GoFPeM8WMFnnff/R9KGr28/WNr7+Lxhq0V4Xg9Q4CJJO2AYCQwhBFDjve0j7B8ixTpKvYvMQ2rUp80uRk6hJ8tc= alexamol@alexamol-UX430UQ"
