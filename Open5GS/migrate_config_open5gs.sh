@@ -20,7 +20,7 @@ CONFIG_MAP=(
 
 # Stop running Open5GS containers before updating config
 echo "Stopping Open5GS Docker containers..."
-# docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" down
+docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" down
 
 # Copy configuration files to their respective locations
 echo "Copying Open5GS configuration files..."
@@ -38,6 +38,6 @@ done
 
 # Restart Open5GS containers
 echo "Restarting Open5GS Docker containers..."
-# docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" up -d
+docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" up -d
 
 echo "Migration complete!"
