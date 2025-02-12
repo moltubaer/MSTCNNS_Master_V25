@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SOURCE_REPO="./config" 
-DESTINATION_DIR="../docker_open5gs"
+SOURCE_REPO="/home/ubuntu/MSTCNNS_Master_V25/Open5gs/config" 
+DESTINATION_DIR="/home/ubuntu/docker_open5gs"
 
 # Mapping of configuration files to correct subdirectories
 declare -A CONFIG_MAP
