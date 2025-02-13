@@ -38,6 +38,6 @@ done
 
 # Restart Open5GS containers
 echo "Restarting Open5GS Docker containers..."
-docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" up -d
+# docker compose -f "$DESTINATION_DIR/sa-deploy.yaml" up -d
 
 echo "Migration complete!"
