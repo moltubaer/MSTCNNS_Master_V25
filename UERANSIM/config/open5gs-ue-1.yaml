@@ -50,8 +50,6 @@ sessions:
     apn: 'internet'
     slice:
       sst: 1
-    # traffic:
-    #   command: "ping -c 2 8.8.8.8"
 
 # Configured NSSAI for this UE by HPLMN
 configured-nssai:
