@@ -41,11 +41,11 @@ services:
     environment:
       DB_URI: mongodb://db/free5gc
       GIN_MODE: release
-    network_mode: "host"
-    # networks:
-    #   privnet:
-    #     aliases:
-    #       - nrf.free5gc.org
+    # network_mode: "host"
+    networks:
+      privnet:
+        aliases:
+          - nrf.free5gc.org
     depends_on:
       - db
 
@@ -130,6 +130,9 @@ services:
     expose:
       - "8000"
     volumes:
+
+
+    
       - ./config/smfcfg.yaml:/free5gc/config/smfcfg.yaml
       - ./config/uerouting.yaml:/free5gc/config/uerouting.yaml
       - ./cert:/free5gc/cert

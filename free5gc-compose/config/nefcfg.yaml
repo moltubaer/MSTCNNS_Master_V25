@@ -11,7 +11,7 @@ configuration:
     tls: # the local path of TLS key
       pem: cert/nef.pem # NEF TLS Certificate
       key: cert/nef.key # NEF TLS Private key
-  nrfUri: http://192.168.0.174:8000 # A valid URI of NRF
+  nrfUri: http://nrf.free5gc.org:8000 # A valid URI of NRF
   nrfCertPem: cert/nrf.pem # NRF Certificate
   serviceList: # the SBI services provided by this NEF
     - serviceName: nnef-pfdmanagement # Nnef_PFDManagement Service

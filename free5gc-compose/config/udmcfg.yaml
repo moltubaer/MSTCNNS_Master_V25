@@ -17,7 +17,7 @@ configuration:
     tls: # the local path of TLS key
       pem: cert/udm.pem # UDM TLS Certificate
       key: cert/udm.key # UDM TLS Private key
-  nrfUri: http://192.168.0.174:8000 # a valid URI of NRF
+  nrfUri: http://nrf.free5gc.org:8000 # a valid URI of NRF
   nrfCertPem: cert/nrf.pem
 
   # test data set from TS33501-f60 Annex C.4

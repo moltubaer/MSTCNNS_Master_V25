@@ -12,7 +12,7 @@ configuration:
     tls: # the local path of TLS key
       pem: cert/chf.pem # CHF TLS Certificate
       key: cert/chf.key # CHF TLS Private key
-  nrfUri: http://192.168.0.174:8000 # a valid URI of NRF
+  nrfUri: http://nrf.free5gc.org:8000 # a valid URI of NRF
   nrfCertPem: cert/nrf.pem # NRF Certificate
   serviceNameList: # the SBI services provided by this CHF, refer to TS 32.291
     - nchf-convergedcharging # Nchf_AMPolicyControl service
