@@ -12,7 +12,7 @@ services:
       - NET_ADMIN
     # network_mode: "host"
     networks:
-      default:
+      privnet:
         aliases:
           - upf.free5gc.org
 
@@ -25,7 +25,7 @@ services:
     volumes:
       - dbdata:/data/db
     networks:
-      default:
+      privnet:
         aliases:
           - db
 
@@ -43,7 +43,7 @@ services:
       GIN_MODE: release
     # network_mode: "host"
     networks:
-      default:
+      privnet:
         aliases:
           - nrf.free5gc.org
     depends_on:
@@ -62,7 +62,7 @@ services:
       GIN_MODE: release
     # network_mode: "host"
     networks:
-      default:
+      privnet:
         # ipv4_address: 10.100.200.16
         ipv4_address: 172.23.0.16
         aliases:
@@ -82,7 +82,7 @@ services:
     environment:
       GIN_MODE: release
     networks:
-      default:
+      privnet:
         aliases:
           - ausf.free5gc.org
     depends_on:
@@ -100,7 +100,7 @@ services:
     environment:
       GIN_MODE: release
     networks:
-      default:
+      privnet:
         aliases:
           - nssf.free5gc.org
     depends_on:
@@ -118,7 +118,7 @@ services:
     environment:
       GIN_MODE: release
     networks:
-      default:
+      privnet:
         aliases:
           - pcf.free5gc.org
     depends_on:
@@ -141,7 +141,7 @@ services:
       GIN_MODE: release
     # network_mode: "host"
     networks:
-      default:
+      privnet:
         aliases:
           - smf.free5gc.org
     depends_on:
@@ -160,7 +160,7 @@ services:
     environment:
       GIN_MODE: release
     networks:
-      default:
+      privnet:
         aliases:
           - udm.free5gc.org
     depends_on:
@@ -180,7 +180,7 @@ services:
       DB_URI: mongodb://db/free5gc
       GIN_MODE: release
     networks:
-      default:
+      privnet:
         aliases:
           - udr.free5gc.org
     depends_on:
@@ -198,7 +198,7 @@ services:
     environment:
       - GIN_MODE=release
     networks:
-      default:
+      privnet:
         aliases:
           - webui
     ports:
@@ -221,7 +221,7 @@ services:
   #   devices:
   #     - "/dev/net/tun"
   #   networks:
-  #     default:
+  #     privnet:
   #       aliases:
   #         - gnb.free5gc.org
   #   depends_on:
@@ -229,9 +229,10 @@ services:
   #     - free5gc-upf
 
   networks:
-    default:
-      name: free5gc_default
+    privnet:
+      name: free5gc_privnet
       ipam:
+        drive: bridge
         config:
           - subnet: 172.23.0.0/24
 
