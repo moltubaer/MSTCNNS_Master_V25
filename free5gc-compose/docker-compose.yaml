@@ -228,15 +228,22 @@ services:
   #     - free5gc-amf
   #     - free5gc-upf
 
-networks:
-  default:
-    ipam:
-      driver: default
-      config:
-        # - subnet: 10.100.200.0/24
-        - subnet: 172.23.0.0/24
-    driver_opts:
-      com.docker.network.bridge.name: br-free5gc
+  networks:
+    default:
+      name: free5gc_default
+      ipam:
+        config:
+          - subnet: 172.23.0.0/24
+
+# networks:
+#   privnet:
+#     ipam:
+#       driver: default
+#       config:
+#         # - subnet: 10.100.200.0/24
+#         - subnet: 172.23.0.0/24
+#     driver_opts:
+#       com.docker.network.bridge.name: br-free5gc
 
 volumes:
   dbdata:
