@@ -10,7 +10,6 @@ services:
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
     cap_add:
       - NET_ADMIN
-    # network_mode: "host"
     networks:
       privnet:
         aliases:
@@ -41,7 +40,6 @@ services:
     environment:
       DB_URI: mongodb://db/free5gc
       GIN_MODE: release
-    # network_mode: "host"
     networks:
       privnet:
         aliases:
@@ -60,7 +58,6 @@ services:
       - ./cert:/free5gc/cert
     environment:
       GIN_MODE: release
-    # network_mode: "host"
     networks:
       privnet:
         # ipv4_address: 10.100.200.16
@@ -131,15 +128,11 @@ services:
     expose:
       - "8000"
     volumes:
-
-
-    
       - ./config/smfcfg.yaml:/free5gc/config/smfcfg.yaml
       - ./config/uerouting.yaml:/free5gc/config/uerouting.yaml
       - ./cert:/free5gc/cert
     environment:
       GIN_MODE: release
-    # network_mode: "host"
     networks:
       privnet:
         aliases:
@@ -209,42 +202,42 @@ services:
       - db
       - free5gc-nrf
 
-  # ueransim:
-  #   container_name: free5gc_ueransim
-  #   image: free5gc/ueransim:latest
-  #   command: ./nr-gnb -c ./config/gnbcfg.yaml
-  #   volumes:
-  #     - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
-  #     - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
-  #   cap_add:
-  #     - NET_ADMIN
-  #   devices:
-  #     - "/dev/net/tun"
-  #   networks:
-  #     privnet:
-  #       aliases:
-  #         - gnb.free5gc.org
-  #   depends_on:
-  #     - free5gc-amf
-  #     - free5gc-upf
-
-  networks:
-    privnet:
-      name: free5gc_privnet
-      ipam:
-        drive: bridge
-        config:
-          - subnet: 172.23.0.0/24
+  ueransim:
+    container_name: free5gc_ueransim
+    image: free5gc/ueransim:latest
+    command: ./nr-gnb -c ./config/gnbcfg.yaml
+    volumes:
+      - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
+      - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    networks:
+      privnet:
+        aliases:
+          - gnb.free5gc.org
+    depends_on:
+      - free5gc-amf
+      - free5gc-upf
 
 # networks:
 #   privnet:
+#     name: free5gc_privnet
 #     ipam:
-#       driver: default
+#       drive: bridge
 #       config:
-#         # - subnet: 10.100.200.0/24
 #         - subnet: 172.23.0.0/24
-#     driver_opts:
-#       com.docker.network.bridge.name: br-free5gc
+
+networks:
+  privnet:
+    name: free5gc_privnet
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.100.200.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br-free5gc
 
 volumes:
   dbdata:
