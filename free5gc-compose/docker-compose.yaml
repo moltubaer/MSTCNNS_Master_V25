@@ -183,84 +183,6 @@ services:
       - db
       - free5gc-nrf
 
-  # free5gc-chf:
-  #   container_name: chf
-  #   image: free5gc/chf:v3.4.4
-  #   command: ./chf -c ./config/chfcfg.yaml
-  #   expose:
-  #     - "8000"
-  #   volumes:
-  #     - ./config/chfcfg.yaml:/free5gc/config/chfcfg.yaml
-  #     - ./cert:/free5gc/cert
-  #   environment:
-  #     DB_URI: mongodb://db/free5gc
-  #     GIN_MODE: release
-  #   networks:
-  #     privnet:
-  #       aliases:
-  #         - chf.free5gc.org
-  #   depends_on:
-  #     - db
-  #     - free5gc-nrf
-  #     - free5gc-webui
-
-  free5gc-n3iwf:
-    container_name: n3iwf
-    image: free5gc/n3iwf:v3.4.4
-    command: ./n3iwf -c ./config/n3iwfcfg.yaml
-    volumes:
-      - ./config/n3iwfcfg.yaml:/free5gc/config/n3iwfcfg.yaml
-      - ./config/n3iwf-ipsec.sh:/free5gc/n3iwf-ipsec.sh
-    environment:
-      GIN_MODE: release
-    cap_add:
-      - NET_ADMIN
-    networks:
-      privnet:
-        ipv4_address: 10.100.200.15
-        aliases:
-          - n3iwf.free5gc.org
-    depends_on:
-      - free5gc-amf
-      - free5gc-smf
-      - free5gc-upf
-
-  # free5gc-tngf:
-  #   container_name: tngf
-  #   image: free5gc/tngf:latest
-  #   command: ./tngf -c ./config/tngfcfg.yaml
-  #   volumes:
-  #     - ./config/tngfcfg.yaml:/free5gc/config/tngfcfg.yaml
-  #     - ./cert:/free5gc/cert
-  #   environment:
-  #     GIN_MODE: release
-  #   cap_add:
-  #     - NET_ADMIN
-  #   network_mode: host
-  #   depends_on:
-  #     - free5gc-amf
-  #     - free5gc-smf
-  #     - free5gc-upf
-
-  free5gc-nef:
-    container_name: nef
-    image: free5gc/nef:latest
-    command: ./nef -c ./config/nefcfg.yaml
-    expose:
-      - "8000"
-    volumes:
-      - ./config/nefcfg.yaml:/free5gc/config/nefcfg.yaml
-      - ./cert:/free5gc/cert
-    environment:
-      GIN_MODE: release
-    networks:
-      privnet:
-        aliases:
-          - nef.free5gc.org
-    depends_on:
-      - db
-      - free5gc-nrf
-
   free5gc-webui:
     container_name: webui
     image: free5gc/webui:v3.4.4
@@ -283,30 +205,31 @@ services:
       - db
       - free5gc-nrf
 
-  # n3iwue:
-  #   container_name: n3iwue
-  #   image: free5gc/n3iwue:latest
-  #   command: bash -c "ip route del default && ip route add default via 10.100.200.1 dev eth0 metric 203 && sleep infinity"
+  # ueransim:
+  #   container_name: ueransim
+  #   image: free5gc/ueransim:latest
+  #   command: ./nr-gnb -c ./config/gnbcfg.yaml
   #   volumes:
-  #     - ./config/n3uecfg.yaml:/n3iwue/config/n3ue.yaml
+  #     - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
+  #     - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
   #   cap_add:
   #     - NET_ADMIN
   #   devices:
   #     - "/dev/net/tun"
   #   networks:
   #     privnet:
-  #       ipv4_address: 10.100.200.203
   #       aliases:
-  #         - n3ue.free5gc.org
+  #         - gnb.free5gc.org
   #   depends_on:
-  #     - free5gc-n3iwf
+  #     - free5gc-amf
+  #     - free5gc-upf
 
 networks:
   privnet:
     ipam:
       driver: default
-      config:
-        - subnet: 10.100.200.0/24
+      # config:
+      #   - subnet: 10.100.200.0/24
     driver_opts:
       com.docker.network.bridge.name: br-free5gc
 
