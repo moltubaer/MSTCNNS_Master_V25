@@ -9,8 +9,10 @@ services:
     command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
     expose:
       - "2152/udp"
+      - "8805/udp"
     ports:
       - "2152:2152/udp"
+      - "8805:8805/udp"
     volumes:
       - ./config/upfcfg.yaml:/free5gc/config/upfcfg.yaml
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
@@ -29,6 +31,9 @@ services:
     command: mongod --port 27017
     expose:
       - "27017"
+    ports:
+      - "27017/udp"
+      - "27017/tcp"
     volumes:
       - dbdata:/data/db
     networks:
@@ -231,26 +236,26 @@ services:
       - db
       - free5gc-nrf
 
-  ueransim:
-    container_name: free5gc_ueransim
-    env_file:
-      - .env
-    image: free5gc/ueransim:latest
-    command: ./nr-gnb -c ./config/gnbcfg.yaml
-    volumes:
-      - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
-      - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - "/dev/net/tun"
-    networks:
-      privnet:
-        aliases:
-          - gnb.free5gc.org
-    depends_on:
-      - free5gc-amf
-      - free5gc-upf
+  # ueransim:
+  #   container_name: free5gc_ueransim
+  #   env_file:
+  #     - .env
+  #   image: free5gc/ueransim:latest
+  #   command: ./nr-gnb -c ./config/gnbcfg.yaml
+  #   volumes:
+  #     - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
+  #     - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
+  #   cap_add:
+  #     - NET_ADMIN
+  #   devices:
+  #     - "/dev/net/tun"
+  #   networks:
+  #     privnet:
+  #       aliases:
+  #         - gnb.free5gc.org
+  #   depends_on:
+  #     - free5gc-amf
+  #     - free5gc-upf
 
 # networks:
 #   privnet:
