@@ -3,16 +3,8 @@ version: "3.8"
 services:
   free5gc-upf:
     container_name: free5gc_upf
-    env_file:
-      - .env
-    image: free5gc/upf:v3.4.4
+    image: free5gc/upf:v3.4.5
     command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
-    expose:
-      - "2152/udp"
-      - "8805/udp"
-    ports:
-      - "2152:2152/udp"
-      - "8805:8805/udp"
     volumes:
       - ./config/upfcfg.yaml:/free5gc/config/upfcfg.yaml
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
@@ -25,15 +17,10 @@ services:
 
   db:
     container_name: free5gc_mongodb
-    env_file:
-      - .env
     image: mongo:3.6.8
     command: mongod --port 27017
     expose:
       - "27017"
-    ports:
-      - "27017/udp"
-      - "27017/tcp"
     volumes:
       - dbdata:/data/db
     networks:
@@ -43,9 +30,7 @@ services:
 
   free5gc-nrf:
     container_name: free5gc_nrf
-    env_file:
-      - .env
-    image: free5gc/nrf:v3.4.4
+    image: free5gc/nrf:v3.4.5
     command: ./nrf -c ./config/nrfcfg.yaml
     expose:
       - "8000"
@@ -64,15 +49,10 @@ services:
 
   free5gc-amf:
     container_name: free5gc_amf
-    env_file:
-      - .env
-    image: free5gc/amf:v3.4.4
+    image: free5gc/amf:v3.4.5
     command: ./amf -c ./config/amfcfg.yaml
     expose:
-      - "38412/sctp"
       - "8000"
-    ports:
-       - "38412:38412/sctp"
     volumes:
       - ./config/amfcfg.yaml:/free5gc/config/amfcfg.yaml
       - ./cert:/free5gc/cert
@@ -80,8 +60,7 @@ services:
       GIN_MODE: release
     networks:
       privnet:
-        # ipv4_address: 10.100.200.16
-        ipv4_address: 172.23.0.16
+        ipv4_address: 10.100.200.16
         aliases:
           - amf.free5gc.org
     depends_on:
@@ -89,9 +68,7 @@ services:
 
   free5gc-ausf:
     container_name: free5gc_ausf
-    env_file:
-      - .env
-    image: free5gc/ausf:v3.4.4
+    image: free5gc/ausf:v3.4.5
     command: ./ausf -c ./config/ausfcfg.yaml
     expose:
       - "8000"
@@ -109,9 +86,7 @@ services:
 
   free5gc-nssf:
     container_name: free5gc_nssf
-    env_file:
-      - .env
-    image: free5gc/nssf:v3.4.4
+    image: free5gc/nssf:v3.4.5
     command: ./nssf -c ./config/nssfcfg.yaml
     expose:
       - "8000"
@@ -128,10 +103,8 @@ services:
       - free5gc-nrf
 
   free5gc-pcf:
-    env_file:
-      - .env
     container_name: free5gc_pcf
-    image: free5gc/pcf:v3.4.4
+    image: free5gc/pcf:v3.4.5
     command: ./pcf -c ./config/pcfcfg.yaml
     expose:
       - "8000"
@@ -148,10 +121,8 @@ services:
       - free5gc-nrf
 
   free5gc-smf:
-    env_file:
-      - .env
     container_name: free5gc_smf
-    image: free5gc/smf:v3.4.4
+    image: free5gc/smf:v3.4.5
     command: ./smf -c ./config/smfcfg.yaml -u ./config/uerouting.yaml
     expose:
       - "8000"
@@ -170,10 +141,8 @@ services:
       - free5gc-upf
 
   free5gc-udm:
-    env_file:
-      - .env
     container_name: free5gc_udm
-    image: free5gc/udm:v3.4.4
+    image: free5gc/udm:v3.4.5
     command: ./udm -c ./config/udmcfg.yaml
     expose:
       - "8000"
@@ -191,10 +160,8 @@ services:
       - free5gc-nrf
 
   free5gc-udr:
-    env_file:
-      - .env
     container_name: free5gc_udr
-    image: free5gc/udr:v3.4.4
+    image: free5gc/udr:v3.4.5
     command: ./udr -c ./config/udrcfg.yaml
     expose:
       - "8000"
@@ -214,9 +181,7 @@ services:
 
   free5gc-webui:
     container_name: free5gc_webui
-    env_file:
-      - .env
-    image: free5gc/webui:v3.4.4
+    image: free5gc/webui:v3.4.5
     command: ./webui -c ./config/webuicfg.yaml
     expose:
       - "2121"
@@ -236,14 +201,30 @@ services:
       - db
       - free5gc-nrf
 
-  # ueransim:
-  #   container_name: free5gc_ueransim
-  #   env_file:
-  #     - .env
+  ueransim:
+    container_name: free5gc_ueransim
+    image: free5gc/ueransim:latest
+    command: ./nr-gnb -c ./config/gnbcfg.yaml
+    volumes:
+      - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
+      - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    networks:
+      privnet:
+        aliases:
+          - gnb.free5gc.org
+    depends_on:
+      - free5gc-amf
+      - free5gc-upf
+
+  # ue:
+  #   container_name: free5gc_ue
   #   image: free5gc/ueransim:latest
-  #   command: ./nr-gnb -c ./config/gnbcfg.yaml
+  #   command: ./nr-ue -c ./config/uecfg.yaml
   #   volumes:
-  #     - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
   #     - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
   #   cap_add:
   #     - NET_ADMIN
@@ -252,27 +233,16 @@ services:
   #   networks:
   #     privnet:
   #       aliases:
-  #         - gnb.free5gc.org
+  #         - ue.free5gc.org
   #   depends_on:
-  #     - free5gc-amf
-  #     - free5gc-upf
-
-# networks:
-#   privnet:
-#     name: free5gc_privnet
-#     ipam:
-#       drive: bridge
-#       config:
-#         - subnet: 172.23.0.0/24
+  #     - ueransim
 
 networks:
   privnet:
-    name: free5gc_privnet
     ipam:
       driver: default
       config:
-        # - subnet: 10.100.200.0/24
-        - subnet: 172.23.0.0/24
+        - subnet: 10.100.200.0/24
     driver_opts:
       com.docker.network.bridge.name: br-free5gc
 
