@@ -53,6 +53,8 @@ services:
     command: ./amf -c ./config/amfcfg.yaml
     expose:
       - "8000"
+    ports:
+      - "38412:38412/sctp"
     volumes:
       - ./config/amfcfg.yaml:/free5gc/config/amfcfg.yaml
       - ./cert:/free5gc/cert
@@ -219,23 +221,6 @@ services:
     depends_on:
       - free5gc-amf
       - free5gc-upf
-
-  # ue:
-  #   container_name: free5gc_ue
-  #   image: free5gc/ueransim:latest
-  #   command: ./nr-ue -c ./config/uecfg.yaml
-  #   volumes:
-  #     - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
-  #   cap_add:
-  #     - NET_ADMIN
-  #   devices:
-  #     - "/dev/net/tun"
-  #   networks:
-  #     privnet:
-  #       aliases:
-  #         - ue.free5gc.org
-  #   depends_on:
-  #     - ueransim
 
 networks:
   privnet:

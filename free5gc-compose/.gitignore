@@ -1,4 +1,9 @@
-cert
-cert/*
-*.pem
-*.key
+# vscode
+.vscode
+
+mongodb
+base/free5gc
+
+# cert
+cert/*.pem
+cert/*.key
