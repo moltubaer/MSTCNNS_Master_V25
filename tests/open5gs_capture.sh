@@ -15,7 +15,7 @@ duration=60
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y%m%d_%H%M%S)
-host_output_dir="$HOME/pcap_captures/$timestamp"
+host_output_dir="/home/ubuntu/pcap_captures/$timestamp"
 mkdir -p "$host_output_dir"
 
 # ========================
