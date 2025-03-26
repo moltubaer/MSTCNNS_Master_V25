@@ -18,6 +18,7 @@ pids+=($!)
 # Start tcpdump in containers
 for container in "${containers[@]}"; do
     echo "[+] Starting tcpdump in container $container..."
+    touch /tmp/${container}_capture.pcap
     docker exec "$container" timeout "$duration" tcpdump -tttt -i "$interface" -w "/tmp/${container}_capture.pcap" > /dev/null 2>&1 &
     pids+=($!)
 done
