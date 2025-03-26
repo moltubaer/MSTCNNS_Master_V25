@@ -2,7 +2,7 @@
 
 duration=10
 host_interface="br-#########"  # CHANGE TO CORRECT BRIDGE INT
-output_dir="./pcap_captures"
+output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"
 
 containers=("open5gs_amf" "open5gs_smf" "open5gs_upf")
