@@ -1,6 +1,6 @@
 #!/bin/bash
 
-duration=60
+duration=10
 host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"
