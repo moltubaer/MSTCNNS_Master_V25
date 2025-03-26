@@ -40,8 +40,6 @@ UE_PID=$!
 
 echo "[*] Running for $DURATION seconds..."
 sleep "$DURATION"
-
-echo "[*] Killing gNB (PID $GNB_PID) and UE (PID $UE_PID)..."
 wait "$GNB_PID" "$UE_PID"
 
 echo "[✓] UERANSIM gNB and UE stopped after $DURATION seconds."
