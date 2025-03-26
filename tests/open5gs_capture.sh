@@ -1,12 +1,11 @@
 #!/bin/bash
 
 duration=${1:-60}
-interface=${2:-any}
 host_interface="br-#########"  # CHANGE TO CORRECT BRIDGE INT
 output_dir="./pcap_captures"
 mkdir -p "$output_dir"
 
-containers=("open5gs-amf" "open5gs-smf" "open5gs-upf")
+containers=("open5gs_amf" "open5gs_smf" "open5gs_upf")
 timestamp=$(date +%Y%m%d_%H%M%S)
 pids=()
 
