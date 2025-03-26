@@ -11,7 +11,7 @@ containers=("open5gs_amf" "open5gs_smf" "open5gs_upf")
 container_interface="any"
 
 # Interface on the host OS to capture from (e.g., eth0, br-xxxx)
-host_interface="br-1234567890ab"  # <-- CHANGE this to match your setup
+host_interface="any"  # <-- CHANGE this to match your setup
 
 # Capture duration in seconds
 duration=60
