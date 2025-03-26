@@ -18,7 +18,7 @@ duration=60
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y%m%d_%H%M%S)
-host_output_dir="/home/ubuntu/pcap_captures/$timestamp"
+host_output_dir="/home/ubuntu/pcap_captures/open5gs-$timestamp"
 mkdir -p "$host_output_dir"
 
 # ========================
@@ -73,5 +73,12 @@ for container in "${containers[@]}"; do
     # Clean up inside the container
     docker exec "$container" rm -f "$src_path"
 done
+
+# ========================
+# SET FILE OWNERSHIP
+# ========================
+
+echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
+sudo chown -R ubuntu:ubuntu "$host_output_dir"
 
 echo "[✓] PCAP collection complete: $host_output_dir"
