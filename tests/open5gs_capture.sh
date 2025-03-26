@@ -14,7 +14,7 @@ container_interface="any"
 host_interface="any"  # <-- CHANGE this to match your setup
 
 # Capture duration in seconds
-duration=60
+duration=90
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y%m%d_%H%M%S)
