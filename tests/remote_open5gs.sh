@@ -7,11 +7,12 @@ CORE="ubuntu@10.100.51.80"
 CORE_SCRIPT="/home/ubuntu/MSTCNNS_Master_V25/tests/open5gs_capture.sh"
 UERANSIM_SCRIPT="/home/ubuntu/MSTCNNS_Master_V25/tests/ueransim_capture.sh"
 REMOTE_OUTPUT_DIR="/home/ubuntu/pcap_captures"
-LOCAL_OUTPUT_DIR="/home/alexandermoltu/Documents/V25/Masterdownloaded_pcaps"
+LOCAL_OUTPUT_DIR="/home/alexandermoltu/Documents/V25/Master/downloaded_pcaps"
 
 # Duration and interface (optional remote args)
 DURATION=60
 UERANSIM_INTERFACE="any"
+# CORE_INTERFACE="any"  # Adjust if needed
 
 # Run scripts in parallel
 echo "[*] Running tcpdump script on CORE ($CORE)..."
