@@ -19,7 +19,7 @@ pids+=($!)
 for container in "${containers[@]}"; do
     echo "[+] Starting tcpdump in container $container..."
     touch /tmp/${container}_capture.pcap
-    docker exec "$container" timeout "$duration" tcpdump -tttt -i "$interface" -w "/tmp/${container}_capture.pcap" > /dev/null 2>&1 &
+    docker exec "$container" timeout "$duration" tcpdump -tttt -i "$interface" -w "./${container}_capture.pcap" > /dev/null 2>&1 &
     pids+=($!)
 done
 
@@ -31,8 +31,8 @@ echo "[+] Captures complete."
 # Copy container pcap files to host directory
 for container in "${containers[@]}"; do
     file="${container}_capture_${timestamp}.pcap"
-    docker cp "$container:/tmp/${container}_capture.pcap" "$output_dir/$file"
-    docker exec "$container" rm -f "/tmp/${container}_capture.pcap"
+    docker cp "$container:./${container}_capture.pcap" "$output_dir/$file"
+    docker exec "$container" rm -f "./${container}_capture.pcap"
 done
 
 echo "[✓] All .pcap files saved to $output_dir"
