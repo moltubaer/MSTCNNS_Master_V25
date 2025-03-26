@@ -18,7 +18,7 @@ DURATION=60
 # ========================
 # START TRAFFIC CAPTURE
 # ========================
-sudo ../ueransim_capture.sh
+sudo ../ueransim_capture.sh &
 
 # ========================
 # START GNB & UE
