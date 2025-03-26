@@ -25,13 +25,13 @@ sudo ../ueransim_capture.sh &
 # ========================
 
 echo "[*] Starting gNB..."
-$GNB_BIN -c "$GNB_CONFIG" > gnb.log 2>&1 &
+timeout "$DURATION" $GNB_BIN -c "$GNB_CONFIG" > gnb.log 2>&1 &
 GNB_PID=$!
 
 sleep 2  # Give gNB time to initialize
 
 echo "[*] Starting UE..."
-$UE_BIN -c "$UE_CONFIG" > ue.log 2>&1 &
+timeout "$DURATION" $UE_BIN -c "$UE_CONFIG" > ue.log 2>&1 &
 UE_PID=$!
 
 # ========================
