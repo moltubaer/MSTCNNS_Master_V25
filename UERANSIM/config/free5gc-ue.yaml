@@ -32,7 +32,7 @@ gnbSearchList:
 
 # UAC Access Identities Configuration
 uacAic:
-  mps: false208
+  mps: false
   mcs: false
 
 # UAC Access Control Class
@@ -45,14 +45,12 @@ uacAcc:
   class15: false
 
 # Initial PDU sessions to be established
-sessions:
-  - type: 'IPv4'
-    apn: 'internet'
-    slice:
-      sst: 0x01
-      sd: 0x010203
-    # traffic:
-      # command: "ping -c 2 8.8.8.8"
+# sessions:
+#   - type: 'IPv4'
+#     apn: 'internet'
+#     slice:
+#       sst: 0x01
+#       sd: 0x010203
 
 # Configured NSSAI for this UE by HPLMN
 configured-nssai:
