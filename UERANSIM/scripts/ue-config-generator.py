@@ -23,12 +23,12 @@ def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_inde
         print(f"Generated {filename} with IMSI {imsi}")
 
 # Example usage:
-# generate_open5gs_ue_configs('open5gs-ue.yaml', './output', 1, 10, 101000000000001)
+# generate_open5gs_ue_configs('open5gs-ue.yaml', './output', 1, 10, 001010000000010)
 generate_open5gs_ue_configs(
     template_path='../config/open5gs-ue.yaml',
     output_dir='./ues',
     start_index=1,
-    end_index=100,
-    base_imsi=101000000000001
+    end_index=10,
+    base_imsi=001010000000010
 )
 

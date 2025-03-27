@@ -64,4 +64,4 @@ def register_open5gs_ues(start_index, end_index, base_imsi, mongo_uri="mongodb:/
     client.close()
 
 # Example usage:
-# register_open5gs_ues(start_index=1, end_index=10, base_imsi=101000000000001)
+register_open5gs_ues(start_index=1, end_index=10, base_imsi=001010000000010)
