@@ -1,12 +1,13 @@
 from pymongo import MongoClient
-from bson import ObjectId
 
-def register_open5gs_ues(start_index, end_index, base_imsi, mongo_uri="mongodb://localhost:27017"):
+def register_open5gs_ues(start_index, end_index, base_imsi_str, mongo_uri="mongodb://localhost:27017"):
     client = MongoClient(mongo_uri)
     db = client["open5gs"]
 
+    base_number = int(base_imsi_str)
+
     for i in range(start_index, end_index + 1):
-        imsi = f"{base_imsi + (i - start_index):015d}"
+        imsi = f"{base_number + (i - start_index):015d}"
 
         subscriber = {
             "imsi": imsi,
@@ -63,5 +64,5 @@ def register_open5gs_ues(start_index, end_index, base_imsi, mongo_uri="mongodb:/
 
     client.close()
 
-# Example usage:
-register_open5gs_ues(start_index=1, end_index=10, base_imsi=001010000000010)
+# Example usage
+register_open5gs_ues(start_index=1, end_index=10, base_imsi_str="001010000000010")
