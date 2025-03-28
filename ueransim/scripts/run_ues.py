@@ -3,7 +3,7 @@ import time
 import os
 import signal
 
-UE_CONFIG_DIR = "home/ubuntu/UERANSIM/config/tests"
+UE_CONFIG_DIR = "/home/ubuntu/UERANSIM/config/tests"
 UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"  # 🔁 <-- Change this to your actual `nr-ue` binary
 
 launched_processes = []
