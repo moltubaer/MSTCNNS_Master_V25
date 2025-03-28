@@ -32,12 +32,17 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
-    parser.add_argument("--count", type=int, required=True, help="Number of UEs to run")
+    parser.add_argument("--count", type=int, help="Number of UEs to run")
     parser.add_argument("--kill", action="store_true", help="Kill running UEs from this session")
+    parser.add_argument("--duration", type=int, default=None, help="Time in seconds before auto-killing UEs")
 
     args = parser.parse_args()
 
     if args.kill:
         kill_ues()
-    else:
+    elif args.count:
         run_ues(args.count)
+        if args.duration:
+            print(f"⏳ Waiting {args.duration} seconds before killing UEs...")
+            time.sleep(args.duration)
+            kill_ues()
