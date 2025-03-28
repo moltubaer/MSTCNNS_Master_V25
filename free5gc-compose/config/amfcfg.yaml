@@ -5,12 +5,13 @@ info:
 configuration:
   amfName: AMF # the name of this AMF
   ngapIpList:  # the IP list of N2 interfaces on this AMF
-    - 192.168.0.174
+    #- amf.free5gc.org
+    - 0.0.0.0
   ngapPort: 38412 # the SCTP port listened by NGAP
   sbi: # Service-based interface information
     scheme: http # the protocol for sbi (http or https)
-    registerIPv4: 192.168.0.174 # IP used to register to NRF
-    bindingIPv4: 192.168.0.174  # IP used to bind the service
+    registerIPv4: amf.free5gc.org # IP used to register to NRF
+    bindingIPv4: amf.free5gc.org  # IP used to bind the service
     port: 8000 # port used to bind the service
     tls: # the local path of TLS key
       pem: cert/amf.pem # AMF TLS Certificate
@@ -43,7 +44,7 @@ configuration:
           sd: 112233 # Slice Differentiator (3 bytes hex string, range: 000000~FFFFFF)
   supportDnnList:  # the DNN (Data Network Name) list supported by this AMF
     - internet
-  nrfUri: http://192.168.0.174:8000 # a valid URI of NRF
+  nrfUri: http://nrf.free5gc.org:8000 # a valid URI of NRF
   nrfCertPem: cert/nrf.pem
   security:  # NAS security parameters
     integrityOrder: # the priority of integrity algorithms
