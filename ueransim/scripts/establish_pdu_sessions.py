@@ -4,7 +4,7 @@ import subprocess
 start_index = 1
 end_index = 5
 base_imsi_str = "001010000000001"  # base IMSI (15-digit numeric)
-nr_cli_path = "./nr-cli"  # Path to your compiled nr-cli
+nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"  # Path to your compiled nr-cli
 
 # === PDU Session Command Parameters ===
 pdu_command = 'ps-establish IPv4 --sst 1 -n internet'
