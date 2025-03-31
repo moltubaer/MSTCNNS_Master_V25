@@ -18,7 +18,7 @@ def run_ues(count):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
             print(f"🚀 Launching UE {i} with config {config_file}")
-            proc = subprocess.Popen(["sudo", UE_BINARY, "-c", config_file])
+            proc = subprocess.Popen([UE_BINARY, "-c", config_file])
             pid_file.write(str(proc.pid) + "\n")
             time.sleep(0.0001)  # 1000 UEs with 0.00001 sleep leads to segfault
 
