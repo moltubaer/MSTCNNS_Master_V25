@@ -20,6 +20,7 @@ def run_ues(count):
             print(f"🚀 Launching UE {i} with config {config_file}")
             proc = subprocess.Popen([UE_BINARY, "-c", config_file])
             pid_file.write(str(proc.pid) + "\n")
+            time.sleep(0.0001)  # 1000 UEs with 0.00001 sleep leads to segfault
 
 def kill_ues():
     if not os.path.exists(PID_FILE):
