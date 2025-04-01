@@ -19,16 +19,25 @@ pdu_release_cmd = 'ps-release-all'
 # === IMSI Calculation Base ===
 base_number = int(base_imsi_str)
 
-# === Main Loop ===
+# === Collect Processes ===
+processes = []
+imsi_list = []
+
 for i in range(start_index, start_index + args.count):
     imsi_number = base_number + (i - start_index)
     imsi = f"imsi-{imsi_number:015d}"
     command = pdu_release_cmd if args.kill else pdu_establish_cmd
     full_cmd = [nr_cli_path, imsi, "--exec", command]
 
-    try:
-        print(f"{'🔻 Releasing' if args.kill else '▶️  Establishing'} PDU session for {imsi}")
-        result = subprocess.Popen(full_cmd, check=True, capture_output=True, text=True)
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Failed for {imsi}: {e.stderr}")
+    print(f"{'🔻 Releasing' if args.kill else '▶️  Establishing'} PDU session for {imsi}")
+    proc = subprocess.Popen(full_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    processes.append(proc)
+    imsi_list.append(imsi)
+
+# === Wait for all and collect output ===
+for imsi, proc in zip(imsi_list, processes):
+    stdout, stderr = proc.communicate()
+    if proc.returncode == 0:
+        print(f"✅ {imsi}: {stdout.strip()}")
+    else:
+        print(f"❌ {imsi}: {stderr.strip()}")
