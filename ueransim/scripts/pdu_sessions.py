@@ -1,5 +1,6 @@
 import subprocess
 import argparse
+import time
 
 # === CLI Arguments ===
 parser = argparse.ArgumentParser(description="Manage PDU sessions via nr-cli")
@@ -33,6 +34,8 @@ for i in range(start_index, start_index + args.count):
     proc = subprocess.Popen(full_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     processes.append(proc)
     imsi_list.append(imsi)
+
+    time.sleep(0.001)  # 1 ms buffer between launches
 
 # === Wait for all and collect output ===
 for imsi, proc in zip(imsi_list, processes):
