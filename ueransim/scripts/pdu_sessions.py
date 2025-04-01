@@ -28,7 +28,7 @@ for i in range(start_index, start_index + args.count):
 
     try:
         print(f"{'🔻 Releasing' if args.kill else '▶️  Establishing'} PDU session for {imsi}")
-        result = subprocess.run(full_cmd, check=True, capture_output=True, text=True)
+        result = subprocess.Popen(full_cmd, check=True, capture_output=True, text=True)
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed for {imsi}: {e.stderr}")
