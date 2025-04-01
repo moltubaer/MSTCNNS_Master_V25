@@ -11,13 +11,13 @@ containers=("open5gs_amf" "open5gs_smf" "open5gs_upf")
 container_interface="any"
 
 # Interface on the host OS to capture from (e.g., eth0, br-xxxx)
-host_interface="any"  # <-- CHANGE this to match your setup
+host_interface="any"
 
 # Capture duration in seconds
 duration=90
 
 # Host output directory for collected pcaps
-timestamp=$(date +%Y%m%d_%H%M%S)
+timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 host_output_dir="/home/ubuntu/pcap_captures/open5gs-$timestamp"
 mkdir -p "$host_output_dir"
 

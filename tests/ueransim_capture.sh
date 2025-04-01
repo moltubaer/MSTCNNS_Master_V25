@@ -5,7 +5,7 @@ host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"
 
-timestamp=$(date +%Y%m%d_%H%M%S)
+timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 pids=()
 
 # Start tcpdump on host

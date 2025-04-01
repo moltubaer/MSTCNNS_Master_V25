@@ -9,7 +9,8 @@ core1="ubuntu@10.100.51.80"
 ueransim="ubuntu@10.100.51.82"
 
 core1_script="/home/ubuntu/MSTCNNS_Master_V25/tests/open5gs_capture.sh"
-ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/tests/control_plane_tests/single_ue_reg.sh"
+ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/tests/ueransim_capture.sh"
+# ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/tests/control_plane_tests/single_ue_reg.sh"
 
 # ========================
 # EXECUTE REMOTE SCRIPTS
