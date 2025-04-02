@@ -7,7 +7,7 @@ DB_NAME="free5gc"
 COLLECTION="subscriber"
 
 # IMSI generation parameters
-PREFIX="001010"
+PREFIX="20893"
 START_INDEX=1
 END_INDEX=1000
 
@@ -20,7 +20,7 @@ for ((i=START_INDEX; i<=END_INDEX+1; i++)); do
 db.$COLLECTION.insertOne({
   imsi: "$IMSI",
   ueId: "$IMSI",
-  servingPlmnId: "00101",
+  servingPlmnId: "20893",
   authSubscription: {
     permanentKey: {
       permanentKey: "8baf473f2f8fd09487cccbd7097c6862"
