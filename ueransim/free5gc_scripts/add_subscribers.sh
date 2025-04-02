@@ -16,7 +16,7 @@ echo "📡 Starting insert of ${END_INDEX} subscribers into MongoDB..."
 for ((i=START_INDEX; i<=END_INDEX; i++)); do
   IMSI="${PREFIX}$(printf "%09d" $i)"
 
-  cat <<EOF | mongo --host "$MONGO_HOST" --port "$MONGO_PORT" "$DB_NAME" > /dev/null
+  cat <<EOF | mongo --host "$MONGO_HOST" --port "$MONGO_PORT" "$DB_NAME"
 db.$COLLECTION.insertOne({
   imsi: "$IMSI",
   ueId: "$IMSI",
@@ -52,7 +52,7 @@ db.$COLLECTION.insertOne({
   },
   sessionManagementSubscriptionData: {
     singleNssai: {
-      sst: 1,
+      sst: "1",
       sd: "010203"
     },
     dnnConfigurations: {
@@ -62,7 +62,7 @@ db.$COLLECTION.insertOne({
           allowedSessionTypes: ["IPV4"]
         },
         sscModes: {
-          defaultSscMode: 1,
+          defaultSscMode: "1",
           allowedSscModes: [1, 2, 3]
         },
         ambr: {
@@ -70,7 +70,7 @@ db.$COLLECTION.insertOne({
           downlink: "1 Gbps"
         },
         qosProfile: {
-          5qi: 9,
+          "5qi": "9",
           arp: {
             priorityLevel: 8,
             preemptCap: "SHALL_NOT_TRIGGER_PREEMPTION",
