@@ -102,7 +102,7 @@ for entry in results:
                     print(
                         f"UE {ue_id}: {req['description']} (Frame {req['frame']}, t={req['relative']:.6f}s) "
                         f"→ {entry['description']} (Frame {entry['frame']}, t={entry['relative']:.6f}s) "
-                        f"Δt = {delta:.3f} s"
+                        f"Δt = {delta:.6f} s"
                     )
                     del pending[req_key]
                 break
