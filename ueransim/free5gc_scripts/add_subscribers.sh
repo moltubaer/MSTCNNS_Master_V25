@@ -13,7 +13,7 @@ END_INDEX=1000
 
 echo "📡 Starting insert of ${END_INDEX} subscribers into MongoDB..."
 
-for ((i=START_INDEX; i<=END_INDEX; i++)); do
+for ((i=START_INDEX; i<=END_INDEX+1; i++)); do
   IMSI="${PREFIX}$(printf "%09d" $i)"
 
   cat <<EOF | mongo --host "$MONGO_HOST" --port "$MONGO_PORT" "$DB_NAME"
