@@ -1,16 +1,25 @@
 #!/bin/bash
 
-MONGO_HOST="mongodb://localhost:27017"
-START=1
-END=1000
-BASE_IMSI=001010000000001
+# MongoDB connection details
+MONGO_HOST="localhost"  # Use "db" if you're running this from another container in the same Docker network
+MONGO_PORT="27017"
+DB_NAME="free5gc"
+COLLECTION="subscriber"
 
-for ((i=START; i<=END; i++)); do
-  imsi=$(printf "%015d" $((BASE_IMSI + i - START)))
-  cat <<EOF | mongosh "$MONGO_HOST/free5gc"
-db.subscriber.insertOne({
-  imsi: "$imsi",
-  ueId: "$imsi",
+# IMSI generation parameters
+PREFIX="001010"
+START_INDEX=1
+END_INDEX=1000
+
+echo "📡 Starting insert of ${END_INDEX} subscribers into MongoDB..."
+
+for ((i=START_INDEX; i<=END_INDEX; i++)); do
+  IMSI="${PREFIX}$(printf "%09d" $i)"
+
+  cat <<EOF | mongo --host "$MONGO_HOST" --port "$MONGO_PORT" "$DB_NAME" > /dev/null
+db.$COLLECTION.insertOne({
+  imsi: "$IMSI",
+  ueId: "$IMSI",
   servingPlmnId: "00101",
   authSubscription: {
     permanentKey: {
@@ -74,5 +83,7 @@ db.subscriber.insertOne({
 });
 EOF
 
-  echo "✅ Inserted $imsi"
+  echo "✅ Inserted $IMSI"
 done
+
+echo "🎉 All done! Total inserted: $((END_INDEX - START_INDEX + 1))"
