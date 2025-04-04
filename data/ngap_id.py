@@ -25,26 +25,34 @@ nas_descriptions = {
     "0x5e": "Security Mode Reject"
 }
 
-# NGAP procedureCode mapping
+# NGAP procedureCode + role mapping
 ngap_procedure_map = {
-    "4":  "DownlinkNASTransport",
-    "9":  "NGSetup",
-    "10": "UEContextRelease",
-    "11": "UplinkNASTransport",
-    "12": "DownlinkNASTransport",
-    "13": "InitialUEMessage",
-    "14": "InitialContextSetup",
-    "15": "Paging",
-    "18": "UEContextModification",
-    "19": "PathSwitchRequest",
-    "21": "InitialContextSetup (alt)",
-    "23": "PDUSessionResourceSetup",
-    "25": "PDUSessionResourceRelease",
-    "41": "NASNonDeliveryIndication",
-    "46": "UplinkNASTransport (extended)"
+    (4, 0):  ("DownlinkNASTransport", "Request"),
+    (4, 1):  ("DownlinkNASTransport", "Response"),
+    (9, 0):  ("NGSetup", "Request"),
+    (10, 0): ("UEContextReleaseRequest", "Request"),
+    (11, 0): ("UplinkNASTransport", "Request"),
+    (12, 0): ("DownlinkNASTransport", "Request"),
+    (13, 0): ("InitialUEMessage", "Request"),
+    (14, 0): ("InitialContextSetup", "Request"),
+    (14, 1): ("InitialContextSetup", "Response"),
+    (15, 0): ("Paging", "Request"),
+    (18, 0): ("UEContextModification", "Request"),
+    (19, 0): ("PathSwitchRequest", "Request"),
+    (21, 0): ("InitialContextSetup (alt)", "Request"),
+    (23, 0): ("PDUSessionResourceSetup", "Request"),
+    (25, 0): ("PDUSessionResourceRelease", "Request"),
+    (29, 0): ("UEContextRelease", "Request"),
+    (29, 1): ("UEContextRelease", "Response"),
+    (39, 0): ("NASNonDeliveryIndication", "Request"),
+    (39, 1): ("NASNonDeliveryIndication", "Response"),
+    (41, 0): ("UEContextReleaseCommand", "Request"),
+    (41, 1): ("UEContextReleaseComplete", "Response"),
+    (46, 0): ("UplinkNASTransport (extended)", "Request"),
+    (46, 1): ("UplinkNASTransport (extended)", "Response")
 }
 
-# Recursive key search
+# Recursive search for a specific key
 def find_all_keys(data, target_key):
     found = []
     if isinstance(data, dict):
@@ -58,30 +66,15 @@ def find_all_keys(data, target_key):
             found.extend(find_all_keys(item, target_key))
     return found
 
-# Detect NGAP message role and extract procedure code safely
-def get_ngap_role_and_proc_code(layers):
-    try:
-        ngap_tree = layers["ngap"].get("ngap.NGAP_PDU_tree", {})
-        if "ngap.initiatingMessage_element" in ngap_tree:
-            return "Request", ngap_tree["ngap.initiatingMessage_element"].get("ngap.procedureCode")
-        elif "ngap.successfulOutcome_element" in ngap_tree:
-            return "Response", ngap_tree["ngap.successfulOutcome_element"].get("ngap.procedureCode")
-        elif "ngap.unsuccessfulOutcome_element" in ngap_tree:
-            return "Reject", ngap_tree["ngap.unsuccessfulOutcome_element"].get("ngap.procedureCode")
-        else:
-            return "-", None
-    except:
-        return "-", None
-
-# Detect if NAS is encrypted
+# Check if NAS is encrypted
 def is_nas_encrypted(layers):
     try:
-        header_types = find_all_keys(layers, "nas_5gs.security_header_type")
-        return any(ht == "4" for ht in header_types)
+        headers = find_all_keys(layers, "nas_5gs.security_header_type")
+        return any(h == "4" for h in headers)
     except:
         return False
 
-# Group packets by RAN_UE_NGAP_ID
+# Group packets by ngap.RAN_UE_NGAP_ID
 ue_packets = defaultdict(list)
 
 for pkt in packets:
@@ -92,10 +85,35 @@ for pkt in packets:
     msg_types = find_all_keys(layers, "nas_5gs.mm.message_type")
     msg_type = msg_types[0].lower() if msg_types else None
     nas_desc = nas_descriptions.get(msg_type, "Unknown" if msg_type else "-")
-
-    ngap_role, proc_code = get_ngap_role_and_proc_code(layers)
-    ngap_name = ngap_procedure_map.get(proc_code, f"Unknown (Code {proc_code})" if proc_code else "-")
     encrypted = is_nas_encrypted(layers)
+
+    # Determine NGAP role and procedureCode
+    proc_code = None
+    choice_index = None
+    ngap = layers.get("ngap", {})
+    ngap_tree = ngap.get("ngap.NGAP_PDU_tree", {})
+
+    if "ngap.initiatingMessage_element" in ngap_tree:
+        choice_index = 0
+        proc_code_raw = find_all_keys(ngap_tree["ngap.initiatingMessage_element"], "ngap.procedureCode")
+    elif "ngap.successfulOutcome_element" in ngap_tree:
+        choice_index = 1
+        proc_code_raw = find_all_keys(ngap_tree["ngap.successfulOutcome_element"], "ngap.procedureCode")
+    elif "ngap.unsuccessfulOutcome_element" in ngap_tree:
+        choice_index = 2
+        proc_code_raw = find_all_keys(ngap_tree["ngap.unsuccessfulOutcome_element"], "ngap.procedureCode")
+    else:
+        proc_code_raw = []
+
+    try:
+        proc_code = int(proc_code_raw[0]) if proc_code_raw else None
+    except:
+        proc_code = None
+
+    ngap_name, ngap_role = ngap_procedure_map.get(
+        (proc_code, choice_index),
+        (f"Unknown (Code {proc_code})", "-")
+    )
 
     if ran_ue_ids:
         ran_ue_id = int(ran_ue_ids[0])
@@ -104,13 +122,12 @@ for pkt in packets:
             "relative": relative,
             "msg_type": msg_type,
             "nas_description": nas_desc,
-            "ngap_code": proc_code,
             "ngap_name": ngap_name,
             "ngap_role": ngap_role,
             "encrypted": encrypted
         })
 
-# Sort and print per RAN_UE_NGAP_ID
+# Print grouped packets
 print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
 for ran_ue_id in sorted(ue_packets.keys()):
     print(f"--- UE {ran_ue_id} ---")
