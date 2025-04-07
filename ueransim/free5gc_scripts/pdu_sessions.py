@@ -17,7 +17,7 @@ nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 max_concurrent = 100  # Limit concurrent PDU requests
 
 # === Command Templates ===
-pdu_establish_cmd = 'ps-establish IPv4 --sst 1 -n internet'
+pdu_establish_cmd = 'ps-establish IPv4'
 pdu_release_cmd = 'ps-release-all'
 base_number = int(base_imsi_str)
 
