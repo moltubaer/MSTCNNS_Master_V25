@@ -11,7 +11,6 @@ def generate_free5gc_ue_configs(template_path, output_dir, start_index, end_inde
 
     for i in range(start_index, end_index + 1):
         imsi = f'imsi-{base_number + (i - start_index):015d}'
-        print(imsi)
         content = template.replace('supi: "imsi-208930000000001"', f'supi: "{imsi}"')
 
         filename = f"free5gc-ue-{i}.yaml"
@@ -24,8 +23,8 @@ def generate_free5gc_ue_configs(template_path, output_dir, start_index, end_inde
 # Example usage
 generate_free5gc_ue_configs(
     template_path='../config/free5gc-ue.yaml',
-    output_dir='./test',
+    output_dir='/home/ubuntu/UERANSIM/config/tests',
     start_index=1,
-    end_index=10,
+    end_index=1000,
     base_imsi_str="208930000000001"
 )
