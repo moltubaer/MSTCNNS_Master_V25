@@ -39,11 +39,3 @@ with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
 
     for f in as_completed(futures):
         print(f.result())
-
-# === Clean up any lingering UE processes ===
-try:
-    print("🧹 Killing lingering nr-ue processes...")
-    subprocess.run(["sudo", "pkill", "-f", "nr-ue"], check=True)
-    print("✅ All nr-ue processes terminated.")
-except subprocess.CalledProcessError as e:
-    print(f"❌ Failed to terminate nr-ue processes: {e}")
