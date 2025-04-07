@@ -1,9 +1,23 @@
+import argparse
 import json
+import csv
 from collections import defaultdict
 
+# Argument parser for optional input file
+parser = argparse.ArgumentParser(description="Parse NGAP/NAS messages by RAN_UE_NGAP_ID.")
+parser.add_argument(
+    "-f", "--file",
+    type=str,
+    default="./captures/pdu-est-re.json",
+    help="Path to the input JSON file"
+)
+args = parser.parse_args()
+
 # Load the JSON file
-with open("./captures/ue-double-reg-dereg.json", "r") as f:
+with open(args.file, "r") as f:
     packets = json.load(f)
+
+csv_rows = []
 
 # NAS message type mapping
 nas_descriptions = {
@@ -42,8 +56,10 @@ ngap_procedure_map = {
     (21, 0): ("InitialContextSetup (alt)", "Request"),
     (23, 0): ("PDUSessionResourceSetup", "Request"),
     (25, 0): ("PDUSessionResourceRelease", "Request"),
-    (29, 0): ("UEContextRelease", "Request"),
-    (29, 1): ("UEContextRelease", "Response"),
+    (29, 0): ("PDUSessionResourceSetupRequest", "Request"),
+    (29, 1): ("PDUSessionResourceSetupRelease", "Response"),
+    # (29, 0): ("UEContextRelease", "Request"),
+    # (29, 1): ("UEContextRelease", "Response"),
     (39, 0): ("NASNonDeliveryIndication", "Request"),
     (39, 1): ("NASNonDeliveryIndication", "Response"),
     (41, 0): ("UEContextReleaseCommand", "Request"),
@@ -51,6 +67,10 @@ ngap_procedure_map = {
     (46, 0): ("UplinkNASTransport (extended)", "Request"),
     (46, 1): ("UplinkNASTransport (extended)", "Response")
 }
+
+# PDU request proc_code 29 for open5gs
+# PDU request proc_code 23 for free5gc
+
 
 # Recursive search for a specific key
 def find_all_keys(data, target_key):
@@ -127,13 +147,98 @@ for pkt in packets:
             "encrypted": encrypted
         })
 
-# Print grouped packets
+# # Print grouped packets
+# print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
+# for ran_ue_id in sorted(ue_packets.keys()):
+#     print(f"--- UE {ran_ue_id} ---")
+#     for pkt in sorted(ue_packets[ran_ue_id], key=lambda x: x["frame"]):
+#         print(f"  Frame {pkt['frame']} - t={pkt['relative']:.6f}s - "
+#               f"NAS: {pkt['msg_type']} - {pkt['nas_description']} | "
+#               f"NGAP: {pkt['ngap_name']} ({pkt['ngap_role']})"
+#               f"{' [Encrypted]' if pkt['encrypted'] else ''}")
+#     print()
+
+
+# Print grouped packets and calculate timings
 print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
+
+# Define message pairs (NAS msg_type or NGAP name)
+message_pairs = [
+    # NAS-based
+    ("0x56", "0x57", "Authentication"),
+    ("0x41", "0x43", "Registration"),
+    ("0x45", "0x46", "Deregistration (UE)"),
+    ("0x47", "0x48", "Deregistration (NW)"),
+
+    # NGAP-based
+    ("InitialContextSetup", "InitialContextSetup", "Initial Context Setup"),
+    ("PDUSessionResourceSetup", "PDUSessionResourceSetup", "PDU Session Setup"),
+    ("PDUSessionResourceSetupRequest", "PDUSessionResourceSetupRelease", "PDU Session Setup"),
+    ("UEContextReleaseCommand", "UEContextReleaseComplete", "Deregistration (Context Release)"),
+    ("0x41", "InitialContextSetup", "Registration Phase"),
+]
+
 for ran_ue_id in sorted(ue_packets.keys()):
     print(f"--- UE {ran_ue_id} ---")
-    for pkt in sorted(ue_packets[ran_ue_id], key=lambda x: x["frame"]):
+    timeline = sorted(ue_packets[ran_ue_id], key=lambda x: x["frame"])
+    for pkt in timeline:
         print(f"  Frame {pkt['frame']} - t={pkt['relative']:.6f}s - "
               f"NAS: {pkt['msg_type']} - {pkt['nas_description']} | "
               f"NGAP: {pkt['ngap_name']} ({pkt['ngap_role']})"
               f"{' [Encrypted]' if pkt['encrypted'] else ''}")
     print()
+
+    # Timing logic
+    for req_type, rsp_type, label in message_pairs:
+        req_pkt = None
+        rsp_pkt = None
+
+        for pkt in timeline:
+            # NAS → NAS
+            if req_type.startswith("0x") and rsp_type.startswith("0x"):
+                if pkt["msg_type"] == req_type and not req_pkt:
+                    req_pkt = pkt
+                elif pkt["msg_type"] == rsp_type and req_pkt and not rsp_pkt:
+                    rsp_pkt = pkt
+                    break
+
+            # NGAP → NGAP
+            elif not req_type.startswith("0x") and not rsp_type.startswith("0x"):
+                if pkt["ngap_name"] == req_type and pkt["ngap_role"] == "Request" and not req_pkt:
+                    req_pkt = pkt
+                elif pkt["ngap_name"] == rsp_type and pkt["ngap_role"] == "Response" and req_pkt and not rsp_pkt:
+                    rsp_pkt = pkt
+                    break
+
+            # NAS → NGAP (special case)
+            elif req_type.startswith("0x") and not rsp_type.startswith("0x"):
+                if pkt["msg_type"] == req_type and not req_pkt:
+                    req_pkt = pkt
+                elif pkt["ngap_name"] == rsp_type and req_pkt and not rsp_pkt:
+                    rsp_pkt = pkt
+                    break
+
+        if req_pkt and rsp_pkt:
+            delta = rsp_pkt["relative"] - req_pkt["relative"]
+            print(f"⏱️  UE {ran_ue_id}: {label} - Frame {req_pkt['frame']} → {rsp_pkt['frame']} Δt = {delta:.6f}s")
+            csv_rows.append({
+                "ue_id": ran_ue_id,
+                "timestamp": f"{req_pkt['relative']:.6f}",
+                "event_type": label,
+                "latency": f"{delta:.6f}"
+            })
+
+    # Total UE lifetime
+    first_pkt = timeline[0]
+    last_pkt = timeline[-1]
+    total_lifetime = last_pkt["relative"] - first_pkt["relative"]
+    print(f"📏 UE {ran_ue_id} lifetime: Frame {first_pkt['frame']} → {last_pkt['frame']} Δt = {total_lifetime:.3f}s\n")
+    print()
+
+# Write to csv
+with open("ngap_latency.csv", "w", newline="") as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=["ue_id", "timestamp", "event_type", "latency"])
+    writer.writeheader()
+    writer.writerows(csv_rows)
+
+print("📄 Latency results written to ngap_latency.csv")
