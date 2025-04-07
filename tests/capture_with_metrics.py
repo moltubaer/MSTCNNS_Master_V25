@@ -2,13 +2,9 @@ import time
 import psutil
 from datetime import datetime
 
-# Todo:
-#   1. change timestamps to seconds only
-#   2. dynamic outputfile nameing
-
-interval = 0.5       # seconds
+interval = 0.2       # seconds
 duration = 60        # total runtime
-outfile = "resource_log.csv"
+outfile = datetime.now().strftime("%m.%d_%H:%M")+"_system.csv"
 num_cores = psutil.cpu_count()
 
 # Warm up: let psutil collect initial CPU stats
@@ -23,7 +19,8 @@ with open(outfile, "w") as f:
 # Logging loop
 start = time.time()
 while time.time() - start < duration:
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     cpu_all = psutil.cpu_percent(interval=None, percpu=True)
     mem = psutil.virtual_memory()
 
