@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # === CLI Arguments ===
 parser = argparse.ArgumentParser(description="Deregister UEs via nr-cli")
 parser.add_argument("--count", type=int, required=True, help="Number of UEs to deregister")
+parser.add_argument("--kill", action="store_true", help="Kill UEs processes")
 args = parser.parse_args()
 
 # === CONFIGURATION ===
@@ -41,9 +42,10 @@ with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
         print(f.result())
 
 # === Clean up any lingering UE processes ===
-try:
-    print("🧹 Killing lingering nr-ue processes...")
-    subprocess.run(["sudo", "pkill", "-f", "nr-ue"], check=True)
-    print("✅ All nr-ue processes terminated.")
-except subprocess.CalledProcessError as e:
-    print(f"❌ Failed to terminate nr-ue processes: {e}")
+if args.kill:
+    try:
+        print("🧹 Killing lingering nr-ue processes...")
+        subprocess.run(["sudo", "pkill", "-f", "nr-ue"], check=True)
+        print("✅ All nr-ue processes terminated.")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to terminate nr-ue processes: {e}")
