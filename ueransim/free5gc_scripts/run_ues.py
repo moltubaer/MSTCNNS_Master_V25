@@ -13,7 +13,7 @@ launched_processes = []
 def run_ues(count):
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
-            config_file = os.path.join(UE_CONFIG_DIR, f"open5gs-ue-{i}.yaml")
+            config_file = os.path.join(UE_CONFIG_DIR, f"free5gc-ue-{i}.yaml")
             if not os.path.exists(config_file):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
