@@ -10,7 +10,7 @@ args = parser.parse_args()
 
 # === CONFIGURATION ===
 start_index = 1
-base_imsi_str = "001010000000001"
+base_imsi_str = "208930000000001"
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 max_concurrent = 100  # Limit concurrent dereg requests
 dereg_cmd = "deregister disable-5g"
