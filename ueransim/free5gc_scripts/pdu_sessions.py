@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 # === Configuration ===
-mean_delay = 0.001
+mean_delay = 0.01   # 10 ms
 start_index = 1
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 

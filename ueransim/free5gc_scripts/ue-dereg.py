@@ -17,7 +17,7 @@ args = parser.parse_args()
 start_index = 1
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 dereg_cmd = "deregister disable-5g"
-mean_delay = 0.001
+mean_delay = 0.01   # 10 ms
 
 # === Core IMSI Parameters ===
 open5gs_imsi_str = "001010000000001"

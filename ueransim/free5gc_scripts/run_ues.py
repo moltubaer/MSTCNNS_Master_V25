@@ -12,7 +12,7 @@ UE_CONFIG_DIR = "/home/ubuntu/UERANSIM/config/tests"
 UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"
 PID_FILE = "ue-pids.txt"
 
-default_delay = 0.001
+default_delay = 0.01    # 10 ms
 launched_processes = []
 
 def run_ues(count, mean_delay):

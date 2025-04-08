@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-mean_delay = 0.001
+mean_delay = 0.01
 sample_size = 300
 inter_arrivals = np.random.exponential(scale=mean_delay, size=sample_size)
 
