@@ -3,6 +3,7 @@ import time
 import os
 import signal
 import argparse
+import numpy as np
 
 UE_CONFIG_DIR = "/home/ubuntu/UERANSIM/config/tests"
 UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"  # 🔁 <-- Change this to your actual `nr-ue` binary
@@ -10,17 +11,32 @@ PID_FILE = "ue-pids.txt"
 
 launched_processes = []
 
-def run_ues(count):
+def generate_exponential_intervals(count, mean_delay):
+    return np.random.exponential(scale=mean_delay, size=count)
+
+def run_ues(count, mean_delay):
+    delays = generate_exponential_intervals(count, mean_delay)
+
+    # for i in range(1, count + 1):
+    #     print("UE", i, delays[i-1])
+
+    #     if i < count:
+    #         time.sleep(delays[i - 1])
+
+
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
             config_file = os.path.join(UE_CONFIG_DIR, f"free5gc-ue-{i}.yaml")
             if not os.path.exists(config_file):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
+
             print(f"🚀 Launching UE {i} with config {config_file}")
             proc = subprocess.Popen([UE_BINARY, "-c", config_file])
             pid_file.write(str(proc.pid) + "\n")
-            time.sleep(0.0001)  # 1000 UEs with 0.00001 sleep leads to segfault
+
+            if i < count:
+                time.sleep(delays[i - 1])
 
 def kill_ues():
     if not os.path.exists(PID_FILE):
@@ -33,7 +49,7 @@ def kill_ues():
     for pid in pids:
         try:
             os.kill(pid, signal.SIGINT)
-            print(f"🛑 Killed PID {pid}")
+            print(f"🚑 Killed PID {pid}")
         except ProcessLookupError:
             print(f"⚠️ PID {pid} not found (already exited?)")
         except Exception as e:
@@ -44,16 +60,17 @@ def kill_ues():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
-    parser.add_argument("--count", type=int, help="Number of UEs to run")
-    parser.add_argument("--kill", action="store_true", help="Kill UEs started from PID file")
-    parser.add_argument("--duration", type=int, help="Run duration before auto-kill (optional)")
+    parser.add_argument("--count", "-c", type=int, help="Number of UEs to run")
+    parser.add_argument("--kill" , "-k", action="store_true", help="Kill UEs started from PID file")
+    parser.add_argument("--duration", "-d", type=int, help="Run duration before auto-kill (optional)")
+    parser.add_argument("--mean-delay", "-md", type=float, default=0.001, help="Average delay between UE starts (seconds)")
 
     args = parser.parse_args()
 
     if args.kill:
         kill_ues()
     elif args.count:
-        run_ues(args.count)
+        run_ues(args.count, args.mean_delay)
         if args.duration:
             print(f"⏳ Running for {args.duration} seconds...")
             time.sleep(args.duration)
