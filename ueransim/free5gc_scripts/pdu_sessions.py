@@ -1,53 +1,90 @@
 import subprocess
 import argparse
 import time
+import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# === CLI Arguments ===
-parser = argparse.ArgumentParser(description="Manage PDU sessions via nr-cli")
-parser.add_argument("--count", type=int, help="Number of UEs to establish sessions for (only needed when not using --kill)")
-parser.add_argument("--kill", action="store_true", help="Release all sessions instead of establishing them")
-args = parser.parse_args()
-
-# === CONFIGURATION ===
+# === Configuration ===
+default_delay = 0.001
 start_index = 1
-base_imsi_str = "208930000000001"
-default_release_count = 1000
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
-max_concurrent = 100  # Limit concurrent PDU requests
+
+# === Core IMSI Parameters ===
+open5gs_imsi_str = "001010000000001"
+free5gc_imsi_str = "208930000000001"
+aether_imsi_str = "208930100000001"
 
 # === Command Templates ===
 pdu_establish_cmd = 'ps-establish IPv4'
 pdu_release_cmd = 'ps-release-all'
-base_number = int(base_imsi_str)
+
+# === CLI Arguments ===
+parser = argparse.ArgumentParser(description="Manage PDU sessions via nr-cli")
+parser.add_argument("--count", "-c", type=int, help="Number of UEs to establish sessions for (only needed when not using --kill)")
+parser.add_argument("--release", action="store_true", help="Release all sessions instead of establishing them")
+parser.add_argument("--mean-delay", type=float, default=default_delay, help="Average delay (in seconds) between session start attempts (used in exponential mode)")
+parser.add_argument("--mode", choices=["linear", "exponential"], default="linear", help="Type of delay buffer between UE PDU session starts")
+parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, default="linear", help="Type of delay buffer between UE PDU session starts")
+args = parser.parse_args()
 
 # === Determine mode and count ===
-mode = "kill" if args.kill else "establish"
-count = default_release_count if args.kill else args.count
+mode = "release" if args.release else "establish"
+count = args.count
+core = args.core
+
+
+if args.core == "open5gs":
+    base_number = int(open5gs_imsi_str)
+elif args.core == "free5gc":
+    base_number = int(free5gc_imsi_str)
+elif args.core == "aether":
+    base_number = int(aether_imsi_str)
+
 
 if count is None:
-    print("❌ Please specify --count N when establishing PDU sessions.")
+    print("❌ Please specify --count N.")
     exit(1)
+elif mode is None:
+    print("❌ Please specify --mode linear|exponential")
+    exit(1)
+elif core is None:
+    print("❌ Please specify --core open5gs|fre5gc|aether")
+    exit(1)
+
 
 # === Function to run one command
 def run_nr_cli(imsi, command):
-    full_cmd = [nr_cli_path, imsi, "--exec", command]
+    # full_cmd = [nr_cli_path, imsi, "--exec", command]
+    full_cmd = ["echo", imsi]
     try:
-        time.sleep(0.001)  # 1 ms buffer
         result = subprocess.run(full_cmd, check=True, capture_output=True, text=True)
         return f"✅ {imsi}: {result.stdout.strip()}"
     except subprocess.CalledProcessError as e:
         return f"❌ {imsi}: {e.stderr.strip()}"
 
-# === Threaded Execution with max 100 workers
-with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
-    futures = []
+# === Main Execution ===
+if mode == "release":
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for i in range(start_index, start_index + count):
+            imsi_number = base_number + (i - start_index)
+            imsi = f"imsi-{imsi_number:015d}"
+            print(f"🔻 Releasing PDU session for {imsi}")
+            futures.append(executor.submit(run_nr_cli, imsi, pdu_release_cmd))
+        for f in as_completed(futures):
+            print(f.result())
+else:
+    if args.mode == "exponential":
+        inter_arrival_times = np.random.exponential(scale=args.mean_delay, size=count - 1)
+    elif args.mode == "linear":
+        inter_arrival_times = [args.mean_delay] * (count - 1)
+
     for i in range(start_index, start_index + count):
         imsi_number = base_number + (i - start_index)
         imsi = f"imsi-{imsi_number:015d}"
-        command = pdu_release_cmd if args.kill else pdu_establish_cmd
-        print(f"{'🔻 Releasing' if args.kill else '▶️  Establishing'} PDU session for {imsi}")
-        futures.append(executor.submit(run_nr_cli, imsi, command))
+        print(f"▶️  Establishing PDU session for {imsi}")
+        print(run_nr_cli(imsi, pdu_establish_cmd))
 
-    for f in as_completed(futures):
-        print(f.result())
+        if i < start_index + count - 1:
+            delay = inter_arrival_times[i - start_index]
+            time.sleep(delay)
