@@ -5,28 +5,32 @@ import signal
 import argparse
 import numpy as np
 
+import matplotlib.pyplot as plt
+
+
 UE_CONFIG_DIR = "/home/ubuntu/UERANSIM/config/tests"
-UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"  # 🔁 <-- Change this to your actual `nr-ue` binary
+UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"
 PID_FILE = "ue-pids.txt"
 
+default_delay = 0.001
 launched_processes = []
 
-def generate_exponential_intervals(count, mean_delay):
-    return np.random.exponential(scale=mean_delay, size=count)
-
 def run_ues(count, mean_delay):
-    delays = generate_exponential_intervals(count, mean_delay)
+    if args.mode == "exponential":
+        delays = np.random.exponential(scale=mean_delay, size=count-1)
+    elif args.mode == "linear":
+        delays = [mean_delay] * (count - 1)
 
-    # for i in range(1, count + 1):
-    #     print("UE", i, delays[i-1])
-
-    #     if i < count:
-    #         time.sleep(delays[i - 1])
-
+    # plt.hist(delays, bins=20, density=True, alpha=0.7, color='blue')
+    # plt.title(f"Exponential Distribution (mean = {mean_delay})")
+    # plt.xlabel("Delay (seconds)")
+    # plt.ylabel("Density")
+    # plt.grid(True)
+    # plt.show()
 
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
-            config_file = os.path.join(UE_CONFIG_DIR, f"free5gc-ue-{i}.yaml")
+            config_file = os.path.join(UE_CONFIG_DIR, f"{args.core}-ue-{i}.yaml")
             if not os.path.exists(config_file):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
@@ -62,16 +66,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
     parser.add_argument("--count", "-c", type=int, help="Number of UEs to run")
     parser.add_argument("--kill" , "-k", action="store_true", help="Kill UEs started from PID file")
-    parser.add_argument("--duration", "-d", type=int, help="Run duration before auto-kill (optional)")
-    parser.add_argument("--mean-delay", "-md", type=float, default=0.001, help="Average delay between UE starts (seconds)")
-
+    parser.add_argument("--mean-delay", "-md", type=float, default=default_delay, help="Average delay between UE starts (seconds)")
+    parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
+    parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Type of delay buffer between UE PDU session starts")
     args = parser.parse_args()
 
     if args.kill:
         kill_ues()
     elif args.count:
         run_ues(args.count, args.mean_delay)
-        if args.duration:
-            print(f"⏳ Running for {args.duration} seconds...")
-            time.sleep(args.duration)
-            kill_ues()

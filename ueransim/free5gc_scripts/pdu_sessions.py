@@ -4,8 +4,11 @@ import time
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import matplotlib.pyplot as plt
+
+
 # === Configuration ===
-default_delay = 0.001
+mean_delay = 0.001
 start_index = 1
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 
@@ -22,9 +25,8 @@ pdu_release_cmd = 'ps-release-all'
 parser = argparse.ArgumentParser(description="Manage PDU sessions via nr-cli")
 parser.add_argument("--count", "-c", type=int, help="Number of UEs to establish sessions for (only needed when not using --kill)")
 parser.add_argument("--release", action="store_true", help="Release all sessions instead of establishing them")
-parser.add_argument("--mean-delay", type=float, default=default_delay, help="Average delay (in seconds) between session start attempts (used in exponential mode)")
-parser.add_argument("--mode", choices=["linear", "exponential"], default="linear", help="Type of delay buffer between UE PDU session starts")
-parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, default="linear", help="Type of delay buffer between UE PDU session starts")
+parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Type of delay buffer between UE PDU session starts")
+parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
 args = parser.parse_args()
 
 # === Determine mode and count ===
@@ -54,8 +56,7 @@ elif core is None:
 
 # === Function to run one command
 def run_nr_cli(imsi, command):
-    # full_cmd = [nr_cli_path, imsi, "--exec", command]
-    full_cmd = ["echo", imsi]
+    full_cmd = [nr_cli_path, imsi, "--exec", command]
     try:
         result = subprocess.run(full_cmd, check=True, capture_output=True, text=True)
         return f"✅ {imsi}: {result.stdout.strip()}"
@@ -75,9 +76,17 @@ if mode == "release":
             print(f.result())
 else:
     if args.mode == "exponential":
-        inter_arrival_times = np.random.exponential(scale=args.mean_delay, size=count - 1)
+        inter_arrival_times = np.random.exponential(scale=mean_delay, size=count - 1)
     elif args.mode == "linear":
-        inter_arrival_times = [args.mean_delay] * (count - 1)
+        inter_arrival_times = [mean_delay] * (count - 1)
+
+
+    # plt.hist(inter_arrival_times, bins=20, density=True, alpha=0.7, color='blue')
+    # plt.title(f"Exponential Distribution (mean = {mean_delay})")
+    # plt.xlabel("Delay (seconds)")
+    # plt.ylabel("Density")
+    # plt.grid(True)
+    # plt.show()
 
     for i in range(start_index, start_index + count):
         imsi_number = base_number + (i - start_index)
