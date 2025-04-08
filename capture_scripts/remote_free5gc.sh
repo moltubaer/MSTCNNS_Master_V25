@@ -8,9 +8,9 @@ core1="ubuntu@10.100.51.80"
 # core2="ubuntu@10.100.51.81"
 ueransim="ubuntu@10.100.51.82"
 
-core1_script="/home/ubuntu/MSTCNNS_Master_V25/tests/free5gc_capture.sh"
-ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/tests/ueransim_capture.sh"
-# ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/tests/control_plane_tests/single_ue_reg.sh"
+core1_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/free5gc_capture.sh"
+ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
+# ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/control_plane_tests/single_ue_reg.sh"
 
 # ========================
 # EXECUTE REMOTE SCRIPTS

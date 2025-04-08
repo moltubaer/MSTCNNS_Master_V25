@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # === CONFIGURATION ===
-csv_file = "../tests/04.07_17:40_system.csv"  # Replace with your file path
+csv_file = "../capture_scripts/04.07_17:40_system.csv"  # Replace with your file path
 
 # === LOAD DATA ===
 df = pd.read_csv(csv_file)
