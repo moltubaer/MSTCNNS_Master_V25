@@ -42,9 +42,15 @@ container_pids=()
 for container in "${containers[@]}"; do
     echo "  [+] $container capturing on interface '$container_interface' for $duration seconds"
 
-    docker exec "$container" \
-        sh -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > /dev/null 2>&1 &
-
+    if [[ "$container" == "free5gc_upf" ]]; then
+        # UPF has bash, use bash
+        docker exec "$container" \
+            bash -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > /dev/null 2>&1 &
+    else
+        # Default to sh for others
+        docker exec "$container" \
+            sh -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > /dev/null 2>&1 &
+    fi
     container_pids+=($!)
 done
 
