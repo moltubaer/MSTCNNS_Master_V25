@@ -1,6 +1,6 @@
 #!/bin/bash
 
-duration=90
+duration=${1:-120}  # default to 120 seconds if not provided
 host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"

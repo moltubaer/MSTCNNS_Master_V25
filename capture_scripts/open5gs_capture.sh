@@ -14,7 +14,7 @@ container_interface="any"
 host_interface="any"
 
 # Capture duration in seconds
-duration=90
+duration=${1:-120}  # default to 120 seconds if not provided
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)

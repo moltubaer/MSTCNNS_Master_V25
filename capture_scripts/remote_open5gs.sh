@@ -13,16 +13,33 @@ core1_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/open5gs_capture.sh
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
 # ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/control_plane_tests/single_ue_reg.sh"
 
+# Default duration
+DURATION=120
+
+# Parse optional arguments
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    --duration)
+      DURATION="$2"
+      shift 2
+      ;;
+    *)
+      echo "❌ Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
 # ========================
 # EXECUTE REMOTE SCRIPTS
 # ========================
 
 echo "[*] Running script on $core1..."
-ssh -tt "$core1" "sudo bash $core1_script && python3 $system_script" &
+ssh -tt "$core1" "sudo bash $core1_script $DURATION && python3 $system_script -d $DURATION" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
-ssh -tt "$ueransim" "sudo bash $ueransim_script && python3 $system_script" &
+ssh -tt "$ueransim" "sudo bash $ueransim_script $DURATION && python3 $system_script -d $DURATION" &
 PID2=$!
 
 # ========================
