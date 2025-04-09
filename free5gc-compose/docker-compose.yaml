@@ -4,7 +4,7 @@ services:
   free5gc-upf:
     container_name: free5gc_upf
     image: free5gc/upf:v3.4.5
-    command: bash -c "apt update && apt install -y tcpdump && ./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
+    command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
     volumes:
       - ./config/upfcfg.yaml:/free5gc/config/upfcfg.yaml
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
@@ -31,7 +31,7 @@ services:
   free5gc-nrf:
     container_name: free5gc_nrf
     image: free5gc/nrf:v3.4.5
-    command: apk add --no-cache tcpdump && ./nrf -c ./config/nrfcfg.yaml
+    command: ./nrf -c ./config/nrfcfg.yaml
     expose:
       - "8000"
     volumes:
@@ -50,7 +50,7 @@ services:
   free5gc-amf:
     container_name: free5gc_amf
     image: free5gc/amf:v3.4.5
-    command: apk add --no-cache tcpdump && ./amf -c ./config/amfcfg.yaml
+    command: ./amf -c ./config/amfcfg.yaml
     expose:
       - "8000"
     ports:
@@ -71,7 +71,7 @@ services:
   free5gc-ausf:
     container_name: free5gc_ausf
     image: free5gc/ausf:v3.4.5
-    command: apk add --no-cache tcpdump && ./ausf -c ./config/ausfcfg.yaml
+    command: ./ausf -c ./config/ausfcfg.yaml
     expose:
       - "8000"
     volumes:
@@ -89,7 +89,7 @@ services:
   free5gc-nssf:
     container_name: free5gc_nssf
     image: free5gc/nssf:v3.4.5
-    command: apk add --no-cache tcpdump && ./nssf -c ./config/nssfcfg.yaml
+    command: ./nssf -c ./config/nssfcfg.yaml
     expose:
       - "8000"
     volumes:
@@ -107,7 +107,7 @@ services:
   free5gc-pcf:
     container_name: free5gc_pcf
     image: free5gc/pcf:v3.4.5
-    command: apk add --no-cache tcpdump && ./pcf -c ./config/pcfcfg.yaml
+    command: ./pcf -c ./config/pcfcfg.yaml
     expose:
       - "8000"
     volumes:
@@ -125,7 +125,7 @@ services:
   free5gc-smf:
     container_name: free5gc_smf
     image: free5gc/smf:v3.4.5
-    command: apk add --no-cache tcpdump && ./smf -c ./config/smfcfg.yaml -u ./config/uerouting.yaml
+    command: ./smf -c ./config/smfcfg.yaml -u ./config/uerouting.yaml
     expose:
       - "8000"
     volumes:
@@ -145,7 +145,7 @@ services:
   free5gc-udm:
     container_name: free5gc_udm
     image: free5gc/udm:v3.4.5
-    command: apk add --no-cache tcpdump && ./udm -c ./config/udmcfg.yaml
+    command: ./udm -c ./config/udmcfg.yaml
     expose:
       - "8000"
     volumes:
@@ -164,7 +164,7 @@ services:
   free5gc-udr:
     container_name: free5gc_udr
     image: free5gc/udr:v3.4.5
-    command: apk add --no-cache tcpdump && ./udr -c ./config/udrcfg.yaml
+    command: ./udr -c ./config/udrcfg.yaml
     expose:
       - "8000"
     volumes:
