@@ -9,6 +9,7 @@ ARG DEBUG_TOOLS
 
 # Install debug tools ~ 100MB (if DEBUG_TOOLS is set to true)
 RUN if [ "$DEBUG_TOOLS" = "true" ] ; then apk add -U vim strace net-tools curl netcat-openbsd ; fi
+RUN apk add --no-cache tcpdump
 
 # Set working dir
 WORKDIR /free5gc
