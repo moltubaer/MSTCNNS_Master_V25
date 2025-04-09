@@ -6,6 +6,9 @@ def register_open5gs_ues(start_index, end_index, base_imsi_str, mongo_uri="mongo
 
     base_number = int(base_imsi_str)
 
+    start_range = '208930100007487'
+    end_range = '208930100008500'
+
     for i in range(start_index, end_index + 1):
         imsi = f"{base_number + (i - start_index):015d}"
 
