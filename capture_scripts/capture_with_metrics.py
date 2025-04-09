@@ -2,9 +2,15 @@ import time
 import psutil
 from datetime import datetime
 import os
+import argparse
 
-interval = 0.2       # seconds
-duration = 90        # total runtime
+# === Argument Parsing ===
+parser = argparse.ArgumentParser(description="Capture system metrics to CSV")
+parser.add_argument("--duration", "-d", type=int, default=120, help="Capture duration in seconds")
+args = parser.parse_args()
+
+duration = args.duration
+interval = 0.2
 outdir = "/home/ubuntu/pcap_captures"
 # outdir = "."
 os.makedirs(outdir, exist_ok=True)
