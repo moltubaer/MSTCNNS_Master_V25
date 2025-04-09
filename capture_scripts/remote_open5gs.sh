@@ -8,6 +8,7 @@ core1="ubuntu@10.100.51.80"
 # core2="ubuntu@10.100.51.81"
 ueransim="ubuntu@10.100.51.82"
 
+system_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py"
 core1_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/open5gs_capture.sh"
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
 # ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/control_plane_tests/single_ue_reg.sh"
@@ -17,11 +18,11 @@ ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_captur
 # ========================
 
 echo "[*] Running script on $core1..."
-ssh -tt "$core1" "sudo bash $core1_script" &
+ssh -tt "$core1" "sudo bash $core1_script && python3 $system_script" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
-ssh -tt "$ueransim" "sudo bash $ueransim_script" &
+ssh -tt "$ueransim" "sudo bash $ueransim_script && python3 $system_script" &
 PID2=$!
 
 # ========================

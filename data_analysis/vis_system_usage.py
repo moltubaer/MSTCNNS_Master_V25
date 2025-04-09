@@ -2,7 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # === CONFIGURATION ===
-csv_file = "../capture_scripts/04.07_17:40_system.csv"  # Replace with your file path
+csv_file = "../capture_scripts/04.07_17:40_system.csv"
+# csv_file = "/home/alexandermoltu/pcap_captures/04.09_14:04_system.csv"
 
 # === LOAD DATA ===
 df = pd.read_csv(csv_file)
@@ -24,7 +25,7 @@ plt.show()
 # === PLOT MEMORY USAGE ===
 plt.figure(figsize=(12, 4))
 plt.plot(df.index, df["mem_used_mb"], label="Used RAM (MB)")
-plt.plot(df.index, df["mem_total_mb"], label="Total RAM (MB)", linestyle='--')
+# plt.plot(df.index, df["mem_total_mb"], label="Total RAM (MB)", linestyle='--')
 plt.title("RAM Usage Over Time")
 plt.xlabel("Time")
 plt.ylabel("Memory (MB)")

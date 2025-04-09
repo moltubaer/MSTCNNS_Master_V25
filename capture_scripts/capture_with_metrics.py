@@ -1,10 +1,14 @@
 import time
 import psutil
 from datetime import datetime
+import os
 
 interval = 0.2       # seconds
-duration = 60        # total runtime
-outfile = datetime.now().strftime("%m.%d_%H:%M")+"_system.csv"
+duration = 90        # total runtime
+outdir = "/home/ubuntu/pcap_captures"
+outdir = "."
+os.makedirs(outdir, exist_ok=True)
+outfile = os.path.join(outdir, datetime.now().strftime("%m.%d_%H:%M")+"_system.csv")
 num_cores = psutil.cpu_count()
 
 # Warm up: let psutil collect initial CPU stats
@@ -13,7 +17,7 @@ time.sleep(interval)
 
 # Header
 with open(outfile, "w") as f:
-    headers = ["timestamp", "cpu_total"] + [f"cpu{i}" for i in range(num_cores)] + ["mem_used_mb", "mem_total_mb", "mem_percent"]
+    headers = ["timestamp", "cpu_total"] + [f"cpu{i}" for i in range(num_cores)] + ["mem_used_mb", "mem_percent"]
     f.write(",".join(headers) + "\n")
 
 # Logging loop
@@ -26,7 +30,7 @@ while time.time() - start < duration:
 
     avg_cpu = sum(cpu_all) / len(cpu_all)
     row = [timestamp, f"{avg_cpu:.2f}"] + [f"{c:.2f}" for c in cpu_all]
-    row += [f"{mem.used // (1024 * 1024)}", f"{mem.total // (1024 * 1024)}", f"{mem.percent:.2f}"]
+    row += [f"{mem.used // (1024 * 1024)}", f"{mem.percent:.2f}"]
 
     with open(outfile, "a") as f:
         f.write(",".join(row) + "\n")
