@@ -40,22 +40,27 @@ if [[ "$CORE" == "free5gc" ]]; then
     echo "[*] Running script on $core1..."
     ssh -tt "$core1" "sudo bash $FREE5GC_SCRIPT" &
     PID1=$!
+    echo "[*] Running script on $ueransim..."
+    ssh -tt "$ueransim" "sudo bash $UERANSIM_SCRIPT" &
+    PID2=$!
 elif [[ "$CORE" == "open5gs" ]]; then
     echo "[*] Running script on $core1..."
     ssh -tt "$core1" "sudo bash $OPEN5GS_SCRIPT" &
     PID1=$!
+    echo "[*] Running script on $ueransim..."
+    ssh -tt "$ueransim" "sudo bash $UERANSIM_SCRIPT" &
+    PID2=$!
 elif [[ "$CORE" == "aether" ]]; then
     echo "[*] Running script on $core2..."
     ssh -tt "$core2" "sudo bash $AETHER_SCRIPT" &
     PID1=$!
+    echo "[*] Running script on $ueransim..."
+    ssh -tt "$ueransim" "sudo bash $UERANSIM_SCRIPT" &
+    PID2=$!
 else
     echo "❌ Invalid core: $CORE. Must be free5gc, open5gs or aether."
     exit 1
 fi
-
-echo "[*] Running script on $ueransim..."
-ssh -tt "$ueransim" "sudo bash $UERANSIM_SCRIPT" &
-PID2=$!
 
 wait $PID1
 wait $PID2
