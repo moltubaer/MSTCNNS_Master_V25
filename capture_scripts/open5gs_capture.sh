@@ -5,7 +5,7 @@
 # ========================
 
 # List of Open5GS containers to capture from
-containers=("open5gs_amf" "open5gs_smf" "open5gs_upf")
+containers=("open5gs_amf" "open5gs_smf" "open5gs_upf" "open5gs_udr" "open5gs_ausf" "open5gs_bsf" "open5gs_pcf" "open5gs_udm" "open5gs_nssf" "open5gs_nrf" "open5gs_scp")
 
 # Interface inside the containers (use "any" to capture all)
 container_interface="any"
