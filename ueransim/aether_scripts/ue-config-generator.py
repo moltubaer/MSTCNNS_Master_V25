@@ -26,6 +26,5 @@ generate_open5gs_ue_configs(
     output_dir='/home/ubuntu/UERANSIM/config/tests',
     start_index=1,
     end_index=10,
-    # base_imsi_str="001010000000010"
     base_imi_str="208930100006001"
 )
