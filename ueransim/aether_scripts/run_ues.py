@@ -13,7 +13,7 @@ launched_processes = []
 def run_ues(count):
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
-            config_file = os.path.join(UE_CONFIG_DIR, f"open5gs-ue-{i}.yaml")
+            config_file = os.path.join(UE_CONFIG_DIR, f"aether-ue-{i}.yaml") # ! changed
             if not os.path.exists(config_file):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
@@ -42,7 +42,15 @@ def kill_ues():
     os.remove(PID_FILE)
     print("✅ All UEs terminated and PID file cleaned up.")
 
+def signal_handler(sig, frame):
+    print("\n Ctrl+C detected! Cleaning up...")
+    kill_ues()
+    exit(0)
+
 if __name__ == "__main__":
+
+    signal.signal(signal.SIGINT, signal_handler)
+
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
     parser.add_argument("--count", type=int, help="Number of UEs to run")
     parser.add_argument("--kill", action="store_true", help="Kill UEs started from PID file")
