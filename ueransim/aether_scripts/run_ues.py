@@ -44,7 +44,11 @@ def kill_ues():
 
 def signal_handler(sig, frame):
     print("\n Ctrl+C detected! Cleaning up...")
-    kill_ues()
+    try:
+        kill_ues()
+        print("UEs killed successfully.")
+    except Exception as e:
+            print(f"Error in signal_handler: {e}")
     exit(0)
 
 if __name__ == "__main__":
