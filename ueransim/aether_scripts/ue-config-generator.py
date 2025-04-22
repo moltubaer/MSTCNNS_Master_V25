@@ -11,9 +11,9 @@ def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_inde
 
     for i in range(start_index, end_index + 1):
         imsi = f'imsi-{base_number + (i - start_index):015d}'
-        content = template.replace("supi: 'imsi-001010000000001'", f"supi: '{imsi}'")
+        content = template.replace("supi: 'imsi-208930100006001'", f"supi: '{imsi}'")
 
-        filename = f"open5gs-ue-{i}.yaml"
+        filename = f"aether-ue-{i}.yaml"
         filepath = os.path.join(output_dir, filename)
         with open(filepath, 'w') as out_file:
             out_file.write(content)
@@ -22,9 +22,9 @@ def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_inde
 
 # Example usage
 generate_open5gs_ue_configs(
-    template_path='../config/open5gs-ue.yaml',
+    template_path='../config/aether-ue.yaml',
     output_dir='/home/ubuntu/UERANSIM/config/tests',
     start_index=1,
     end_index=10,
-    base_imsi_str="001010000000010"
+    base_imi_str="208930100006001"
 )
