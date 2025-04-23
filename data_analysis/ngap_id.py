@@ -1,14 +1,19 @@
 import argparse
 import json
 import csv
+import os
+import matplotlib.pyplot as plt
+import pandas as pd
 from collections import defaultdict
 
+num = 300
 # Argument parser for optional input file
 parser = argparse.ArgumentParser(description="Parse NGAP/NAS messages by RAN_UE_NGAP_ID.")
 parser.add_argument(
     "-f", "--file",
     type=str,
-    default="./captures/pdu-est-re.json",
+    # default="./captures/pdu-est-re.json",
+    default="/home/alexandermoltu/master/captures/open5gs_ueransim_ue_reg/" + str(num) + ".json",
     help="Path to the input JSON file"
 )
 args = parser.parse_args()
@@ -235,10 +240,44 @@ for ran_ue_id in sorted(ue_packets.keys()):
     print(f"📏 UE {ran_ue_id} lifetime: Frame {first_pkt['frame']} → {last_pkt['frame']} Δt = {total_lifetime:.3f}s\n")
     print()
 
-# Write to csv
-with open("ngap_latency.csv", "w", newline="") as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=["ue_id", "timestamp", "event_type", "latency"])
-    writer.writeheader()
-    writer.writerows(csv_rows)
+# Group CSV rows by event_type
+grouped_csv_rows = defaultdict(list)
+for row in csv_rows:
+    grouped_csv_rows[row["event_type"]].append(row)
 
-print("📄 Latency results written to ngap_latency.csv")
+# Phase-wide summary statistics split into per-event CSV files
+for event_type, rows in grouped_csv_rows.items():
+    timestamps = [float(row["timestamp"]) for row in rows]
+    latencies = [float(row["latency"]) for row in rows]
+
+    if not timestamps or not latencies:
+        continue
+
+    start_time = min(timestamps)
+    end_time = max(start + latency for start, latency in zip(timestamps, latencies))
+    total_duration = end_time - start_time
+    average_latency = sum(latencies) / len(latencies)
+    num_ues = len(latencies)
+
+    print(f"📊 {event_type}:")
+    print(f"   Total time from first request to last response: {total_duration:.6f}s")
+    print(f"   Average UE latency: {average_latency:.6f}s")
+    print(f"   Number of UEs: {num_ues}\n")
+
+    filename = f"tmp/{event_type.lower().replace(' ', '_')}_summary.csv"
+    
+    # Only write header if file is empty or doesn't exist
+    write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
+
+    with open(filename, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["event_type", "total_duration", "average_latency", "num_ues"])
+        if write_header:
+            writer.writeheader()
+        writer.writerow({
+            "event_type": event_type,
+            "total_duration": f"{total_duration:.6f}",
+            "average_latency": f"{average_latency:.6f}",
+            "num_ues": num_ues
+        })
+
+    print(f"📄 Summary appended to {filename}")
