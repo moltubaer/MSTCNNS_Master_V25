@@ -4,6 +4,9 @@ from datetime import datetime
 import os
 import argparse
 
+# ToDo: Change to linux time
+# Problem: this script starts after the tcpdump finishes
+
 # === Argument Parsing ===
 parser = argparse.ArgumentParser(description="Capture system metrics to CSV")
 parser.add_argument("--duration", "-d", type=int, default=120, help="Capture duration in seconds")
