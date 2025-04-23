@@ -4,7 +4,6 @@ import time
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import matplotlib.pyplot as plt
 
 
 # === Configuration ===
@@ -56,7 +55,7 @@ elif core is None:
 
 # === Function to run one command
 def run_nr_cli(imsi, command):
-    full_cmd = [nr_cli_path, imsi, "--exec", command]
+    full_cmd = ["sudo", nr_cli_path, imsi, "--exec", command]
     try:
         result = subprocess.run(full_cmd, check=True, capture_output=True, text=True)
         return f"✅ {imsi}: {result.stdout.strip()}"
