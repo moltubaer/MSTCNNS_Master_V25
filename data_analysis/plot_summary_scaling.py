@@ -22,18 +22,27 @@ for label, filepath in files.items():
     df.dropna(subset=["num_ues", "total_duration", "average_latency"], inplace=True)
 
     # Plot total duration
+    if "sum_latencies" in df.columns:
+        df["sum_latencies"] = pd.to_numeric(df["sum_latencies"], errors="coerce")
+
+    # Combined plot: total_duration + sum_latencies
     plt.figure(figsize=(8, 5))
-    plt.plot(df["num_ues"], df["total_duration"], marker="o", label="Total Duration")
-    plt.title(f"Total Duration vs Number of UEs — {label}")
+    plt.plot(df["num_ues"], df["total_duration"], marker="o", label="Total Duration", color="blue")
+    
+    if "sum_latencies" in df.columns:
+        plt.plot(df["num_ues"], df["sum_latencies"], marker="s", linestyle="--", label="Sum of Latencies", color="green")
+
+    plt.title(f"Total Duration & Sum of Latencies vs Number of UEs — {label}")
     plt.xlabel("Number of UEs")
-    plt.ylabel("Total Duration (s)")
+    plt.ylabel("Time (s)")
     plt.grid(True)
+    plt.legend()
     ax = plt.gca()
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.4f'))
-    # ax.yaxis.set_major_locator(ticker.MultipleLocator(0.25))  # Adjust granularity here
     plt.tight_layout()
-    plt.savefig(f"plots/{label.lower().replace(' ', '_')}_total_duration.png")
+    plt.savefig(f"plots/{label.lower().replace(' ', '_')}_combined_duration.png")
     plt.close()
+
 
     # Plot average latency
     plt.figure(figsize=(8, 5))

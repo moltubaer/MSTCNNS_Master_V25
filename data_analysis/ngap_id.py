@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from collections import defaultdict
 
-num = 300
+num = 500
 # Argument parser for optional input file
 parser = argparse.ArgumentParser(description="Parse NGAP/NAS messages by RAN_UE_NGAP_ID.")
 parser.add_argument(
@@ -245,9 +245,11 @@ for event_type, rows in grouped_csv_rows.items():
     end_time = max([float(row["timestamp"]) + float(row["latency"]) for row in rows])
     total_duration = end_time - start_time
     average_latency = sum(latencies) / len(latencies)
+    sum_all_latencies = average_latency * 100   # ONLY AN APPROXIMATION
 
     print(f"📊 {event_type}:")
     print(f"   Total time from first request to last response: {total_duration:.6f}s")
+    print(f"   Sum of all latencies (per-UE): {sum_all_latencies:.6f}s")
     print(f"   Average UE latency: {average_latency:.6f}s")
     print(f"   Number of UEs: {num}\n")
 
@@ -257,14 +259,16 @@ for event_type, rows in grouped_csv_rows.items():
     write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
 
     with open(filename, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["event_type", "total_duration", "average_latency", "num_ues"])
+        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "sum_latencies"])
         if write_header:
             writer.writeheader()
         writer.writerow({
             "event_type": event_type,
             "total_duration": f"{total_duration:.6f}",
             "average_latency": f"{average_latency:.6f}",
-            "num_ues": num
+            "num_ues": num,
+            "sum_latencies": f"{sum_all_latencies:.6f}"
         })
 
     print(f"📄 Summary appended to {filename}")
+    print()
