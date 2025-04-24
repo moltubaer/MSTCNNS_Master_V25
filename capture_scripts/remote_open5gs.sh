@@ -37,13 +37,13 @@ done
 echo "[*] Running script on $core1..."
 # ssh -tt "$core1" "sudo bash $core1_script $DURATION && python3 $system_script -d $DURATION" &
 ssh -tt "$core1" "sudo bash $core1_script $DURATION" &
-ssh -tt "$core1" "python3 $system_script -d $DURATION" &
+ssh -tt "$core1" "sudo python3 $system_script -d $DURATION" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
 # ssh -tt "$ueransim" "sudo bash $ueransim_script $DURATION && python3 $system_script -d $DURATION" &
 ssh -tt "$ueransim" "sudo bash $ueransim_script $DURATION" &
-ssh -tt "$ueransim" "python3 $system_script -d $DURATION" &
+ssh -tt "$ueransim" "sudo python3 $system_script -d $DURATION" &
 PID2=$!
 
 # ========================
