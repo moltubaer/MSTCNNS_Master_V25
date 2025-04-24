@@ -26,7 +26,7 @@ mkdir -p "$host_output_dir"
 # ========================
 
 # Start metrics capture in background for 120 seconds
-python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
+# python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
 
 echo "[*] Starting tcpdump on host interface: $host_interface"
 
