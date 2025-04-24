@@ -152,18 +152,6 @@ for pkt in packets:
             "encrypted": encrypted
         })
 
-# # Print grouped packets
-# print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
-# for ran_ue_id in sorted(ue_packets.keys()):
-#     print(f"--- UE {ran_ue_id} ---")
-#     for pkt in sorted(ue_packets[ran_ue_id], key=lambda x: x["frame"]):
-#         print(f"  Frame {pkt['frame']} - t={pkt['relative']:.6f}s - "
-#               f"NAS: {pkt['msg_type']} - {pkt['nas_description']} | "
-#               f"NGAP: {pkt['ngap_name']} ({pkt['ngap_role']})"
-#               f"{' [Encrypted]' if pkt['encrypted'] else ''}")
-#     print()
-
-
 # Print grouped packets and calculate timings
 print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
 
@@ -254,9 +242,10 @@ for event_type, rows in grouped_csv_rows.items():
         continue
 
     start_time = min(timestamps)
-    end_time = max(start + latency for start, latency in zip(timestamps, latencies))
+    end_time = max([float(row["timestamp"]) + float(row["latency"]) for row in rows])
     total_duration = end_time - start_time
     average_latency = sum(latencies) / len(latencies)
+    # average_latency = total_duration / num
 
     print(f"📊 {event_type}:")
     print(f"   Total time from first request to last response: {total_duration:.6f}s")
