@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 # === CONFIGURATION ===
 csv_file = "../capture_scripts/04.07_17:40_system.csv"
@@ -8,15 +9,19 @@ csv_file = "../capture_scripts/04.07_17:40_system.csv"
 # === LOAD DATA ===
 df = pd.read_csv(csv_file)
 
-# Convert timestamp to datetime for proper plotting
-df["timestamp"] = pd.to_datetime(df["timestamp"], format="%H:%M:%S.%f")
+# Convert Unix timestamp to float
+df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
 df.set_index("timestamp", inplace=True)
+
+# Optionally normalize time (seconds since start)
+start_time = df["timestamp"].min()
+df["time_since_start"] = df["timestamp"] - start_time
 
 # === PLOT TOTAL CPU USAGE ===
 plt.figure(figsize=(12, 4))
-plt.plot(df.index, df["cpu_total"], label="Total CPU Usage")
+plt.plot(df["time_since_start"], df["cpu_total"], label="Total CPU Usage")
 plt.title("Total CPU Usage Over Time")
-plt.xlabel("Time")
+plt.xlabel("Time Since Start (s)")
 plt.ylabel("CPU Usage (%)")
 plt.grid(True)
 plt.tight_layout()
@@ -24,10 +29,9 @@ plt.show()
 
 # === PLOT MEMORY USAGE ===
 plt.figure(figsize=(12, 4))
-plt.plot(df.index, df["mem_used_mb"], label="Used RAM (MB)")
-# plt.plot(df.index, df["mem_total_mb"], label="Total RAM (MB)", linestyle='--')
+plt.plot(df["time_since_start"], df["mem_used_mb"], label="Used RAM (MB)")
 plt.title("RAM Usage Over Time")
-plt.xlabel("Time")
+plt.xlabel("Time Since Start (s)")
 plt.ylabel("Memory (MB)")
 plt.legend()
 plt.grid(True)
@@ -39,10 +43,10 @@ cpu_core_columns = [col for col in df.columns if col.startswith("cpu") and col !
 
 plt.figure(figsize=(12, 6))
 for col in cpu_core_columns:
-    plt.plot(df.index, df[col], label=col)
+    plt.plot(df["time_since_start"], df[col], label=col)
 
 plt.title("Per-Core CPU Usage Over Time")
-plt.xlabel("Time")
+plt.xlabel("Time Since Start (s)")
 plt.ylabel("CPU Usage (%)")
 plt.legend(loc='upper right', ncol=2)
 plt.grid(True)
