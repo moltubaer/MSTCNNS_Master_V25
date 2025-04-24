@@ -25,6 +25,9 @@ mkdir -p "$host_output_dir"
 # HOST OS CAPTURE
 # ========================
 
+# Start metrics capture in background for 120 seconds
+python3 capture_with_metrics.py --duration 120 &
+
 echo "[*] Starting tcpdump on host interface: $host_interface"
 
 host_pcap_path="$host_output_dir/host_capture.pcap"
