@@ -13,7 +13,7 @@ parser.add_argument(
     "-f", "--file",
     type=str,
     # default="./captures/pdu-est-re.json",
-    default="/home/alexandermoltu/master/captures/open5gs_ueransim_ue_reg/" + str(num) + ".json",
+    default="/home/alexandermoltu/master/captures/open5gs_ueransim_ue_dereg/" + str(num) + ".json",
     help="Path to the input JSON file"
 )
 args = parser.parse_args()
@@ -257,12 +257,11 @@ for event_type, rows in grouped_csv_rows.items():
     end_time = max(start + latency for start, latency in zip(timestamps, latencies))
     total_duration = end_time - start_time
     average_latency = sum(latencies) / len(latencies)
-    num_ues = len(latencies)
 
     print(f"📊 {event_type}:")
     print(f"   Total time from first request to last response: {total_duration:.6f}s")
     print(f"   Average UE latency: {average_latency:.6f}s")
-    print(f"   Number of UEs: {num_ues}\n")
+    print(f"   Number of UEs: {num}\n")
 
     filename = f"tmp/{event_type.lower().replace(' ', '_')}_summary.csv"
     
@@ -277,7 +276,7 @@ for event_type, rows in grouped_csv_rows.items():
             "event_type": event_type,
             "total_duration": f"{total_duration:.6f}",
             "average_latency": f"{average_latency:.6f}",
-            "num_ues": num_ues
+            "num_ues": num
         })
 
     print(f"📄 Summary appended to {filename}")
