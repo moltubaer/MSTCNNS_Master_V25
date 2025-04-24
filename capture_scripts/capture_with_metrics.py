@@ -32,8 +32,7 @@ with open(outfile, "w") as f:
 # Logging loop
 start = time.time()
 while time.time() - start < duration:
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    timestamp = f"{time.time():.3f}"  # Unix time in seconds.milliseconds
     cpu_all = psutil.cpu_percent(interval=None, percpu=True)
     mem = psutil.virtual_memory()
 
