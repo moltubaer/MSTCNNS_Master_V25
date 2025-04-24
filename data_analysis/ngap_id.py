@@ -245,7 +245,6 @@ for event_type, rows in grouped_csv_rows.items():
     end_time = max([float(row["timestamp"]) + float(row["latency"]) for row in rows])
     total_duration = end_time - start_time
     average_latency = sum(latencies) / len(latencies)
-    # average_latency = total_duration / num
 
     print(f"📊 {event_type}:")
     print(f"   Total time from first request to last response: {total_duration:.6f}s")
