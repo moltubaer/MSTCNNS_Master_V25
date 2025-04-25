@@ -141,24 +141,16 @@ for pkt in packets:
     )
 
     if ran_ue_ids:
-        if len(ran_ue_ids) > 1:
-            print(f"🔁 Multi-UE packet (frame {frame}): contains {len(ran_ue_ids)} RAN_UE_NGAP_IDs")
-        for ran_ue_id_raw in ran_ue_ids:
-            try:
-                ran_ue_id = int(ran_ue_id_raw)
-            except ValueError:
-                continue  # skip non-integer values
-
-            ue_packets[ran_ue_id].append({
-                "frame": frame,
-                "relative": relative,
-                "msg_type": msg_type,
-                "nas_description": nas_desc,
-                "ngap_name": ngap_name,
-                "ngap_role": ngap_role,
-                "encrypted": encrypted
-            })
-
+        ran_ue_id = int(ran_ue_ids[0])
+        ue_packets[ran_ue_id].append({
+            "frame": frame,
+            "relative": relative,
+            "msg_type": msg_type,
+            "nas_description": nas_desc,
+            "ngap_name": ngap_name,
+            "ngap_role": ngap_role,
+            "encrypted": encrypted
+        })
 
 # Print grouped packets and calculate timings
 print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
@@ -269,7 +261,7 @@ for event_type, rows in grouped_csv_rows.items():
     write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
 
     with open(filename, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "effective_num_ues", "sum_latencies"])
+        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "sum_latencies"])
         if write_header:
             writer.writeheader()
         writer.writerow({
