@@ -247,6 +247,7 @@ for event_type, rows in grouped_csv_rows.items():
     average_latency = sum(latencies) / len(latencies)
     sum_all_latencies = average_latency * num   # ONLY AN APPROXIMATION
     # sum_all_latencies = sum(latencies)
+    effective_num_ues = len(latencies)
 
     print(f"📊 {event_type}:")
     print(f"   Total time from first request to last response: {total_duration:.6f}s")
@@ -268,6 +269,7 @@ for event_type, rows in grouped_csv_rows.items():
             "total_duration": f"{total_duration:.6f}",
             "average_latency": f"{average_latency:.6f}",
             "num_ues": num,
+            "effective_num_ues": effective_num_ues,
             "sum_latencies": f"{sum_all_latencies:.6f}"
         })
 
