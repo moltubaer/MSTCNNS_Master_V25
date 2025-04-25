@@ -261,7 +261,7 @@ for event_type, rows in grouped_csv_rows.items():
     write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
 
     with open(filename, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "sum_latencies"])
+        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "effective_num_ues", "sum_latencies"])
         if write_header:
             writer.writeheader()
         writer.writerow({
