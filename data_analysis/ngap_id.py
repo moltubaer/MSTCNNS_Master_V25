@@ -13,7 +13,7 @@ parser.add_argument(
     "-f", "--file",
     type=str,
     # default="./captures/pdu-est-re.json",
-    default="/home/alexandermoltu/master/captures/open5gs_ueransim_ue_dereg/" + str(num) + ".json",
+    default="/home/ubuntu/pcap_captures/" + str(num) + ".json",
     help="Path to the input JSON file"
 )
 args = parser.parse_args()
@@ -269,7 +269,7 @@ for event_type, rows in grouped_csv_rows.items():
     write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
 
     with open(filename, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "sum_latencies"])
+        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "effective_num_ues", "sum_latencies"])
         if write_header:
             writer.writeheader()
         writer.writerow({
