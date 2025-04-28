@@ -5,6 +5,9 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 from collections import defaultdict
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 num = 500
 # Argument parser for optional input file
@@ -76,19 +79,21 @@ ngap_procedure_map = {
 # PDU request proc_code 29 for open5gs
 # PDU request proc_code 23 for free5gc
 
+NGAP_PROCEDURE_CODE = "ngap.procedureCode"
+NAS_MESSAGE_TYPE = "nas_5gs.mm.message_type"
 
 # Recursive search for a specific key
 def find_all_keys(data, target_key):
-    found = []
+    """Recursively find all occurrences of a key in a nested structure."""
     if isinstance(data, dict):
         for key, value in data.items():
             if key == target_key:
-                found.append(value)
+                yield value
             else:
-                found.extend(find_all_keys(value, target_key))
+                yield from find_all_keys(value, target_key)
     elif isinstance(data, list):
         for item in data:
-            found.extend(find_all_keys(item, target_key))
+            yield from find_all_keys(item, target_key)
     return found
 
 # Check if NAS is encrypted
@@ -99,15 +104,32 @@ def is_nas_encrypted(layers):
     except:
         return False
 
+def extract_ngap_procedure_codes(ngap_tree):
+    """Extract NGAP procedure codes from the NGAP tree."""
+    if "ngap.initiatingMessage_element" in ngap_tree:
+        choice_index = 0
+        proc_code_raw = list(find_all_keys(ngap_tree["ngap.initiatingMessage_element"], NGAP_PROCEDURE_CODE))
+    elif "ngap.successfulOutcome_element" in ngap_tree:
+        choice_index = 1
+        proc_code_raw = find_all_keys(ngap_tree["ngap.successfulOutcome_element"], NGAP_PROCEDURE_CODE)
+    elif "ngap.unsuccessfulOutcome_element" in ngap_tree:
+        choice_index = 2
+        proc_code_raw = find_all_keys(ngap_tree["ngap.unsuccessfulOutcome_element"], NGAP_PROCEDURE_CODE)
+    else:
+        choice_index = None
+        proc_code_raw = []
+    return choice_index, proc_code_raw
+
 # Group packets by ngap.RAN_UE_NGAP_ID
 ue_packets = defaultdict(list)
 
 for pkt in packets:
     layers = pkt.get("_source", {}).get("layers", {})
-    frame = int(layers.get("frame", {}).get("frame.number", -1))
-    relative = float(layers.get("frame", {}).get("frame.time_relative", -1))
+    frame_data = layers.get("frame", {})
+    frame = int(frame_data.get("frame.number", -1))
+    relative = float(frame_data.get("frame.time_relative", -1))
     ran_ue_ids = find_all_keys(layers, "ngap.RAN_UE_NGAP_ID")
-    msg_types = find_all_keys(layers, "nas_5gs.mm.message_type")
+    msg_types = find_all_keys(layers, NAS_MESSAGE_TYPE)
     msg_type = msg_types[0].lower() if msg_types else None
     nas_desc = nas_descriptions.get(msg_type, "Unknown" if msg_type else "-")
     encrypted = is_nas_encrypted(layers)
@@ -118,42 +140,34 @@ for pkt in packets:
     ngap = layers.get("ngap", {})
     ngap_tree = ngap.get("ngap.NGAP_PDU_tree", {})
 
-    if "ngap.initiatingMessage_element" in ngap_tree:
-        choice_index = 0
-        proc_code_raw = find_all_keys(ngap_tree["ngap.initiatingMessage_element"], "ngap.procedureCode")
-    elif "ngap.successfulOutcome_element" in ngap_tree:
-        choice_index = 1
-        proc_code_raw = find_all_keys(ngap_tree["ngap.successfulOutcome_element"], "ngap.procedureCode")
-    elif "ngap.unsuccessfulOutcome_element" in ngap_tree:
-        choice_index = 2
-        proc_code_raw = find_all_keys(ngap_tree["ngap.unsuccessfulOutcome_element"], "ngap.procedureCode")
-    else:
-        proc_code_raw = []
-
+    choice_index, proc_code_raw = extract_ngap_procedure_codes(ngap_tree)
+    
+    # ! Fixed for several ngap.procedureCode
     try:
-        proc_code = int(proc_code_raw[0]) if proc_code_raw else None
-    except:
-        proc_code = None
+        proc_codes = [int(code) for code in proc_code_raw]
+    except ValueError:
+        proc_codes = []
 
-    ngap_name, ngap_role = ngap_procedure_map.get(
-        (proc_code, choice_index),
-        (f"Unknown (Code {proc_code})", "-")
-    )
+    for proc_code in proc_codes:
+        ngap_name, ngap_role = ngap_procedure_map.get(
+            (proc_code, choice_index),
+            (f"Unknown (Code {proc_code})", "-")
+        )
 
-    if ran_ue_ids:
-        ran_ue_id = int(ran_ue_ids[0])
-        ue_packets[ran_ue_id].append({
-            "frame": frame,
-            "relative": relative,
-            "msg_type": msg_type,
-            "nas_description": nas_desc,
-            "ngap_name": ngap_name,
-            "ngap_role": ngap_role,
-            "encrypted": encrypted
-        })
+        if ran_ue_ids:
+            ran_ue_id = int(ran_ue_ids[0])
+            ue_packets[ran_ue_id].append({
+                "frame": frame,
+                "relative": relative,
+                "msg_type": msg_type,
+                "nas_description": nas_desc,
+                "ngap_name": ngap_name,
+                "ngap_role": ngap_role,
+                "encrypted": encrypted
+            })
 
 # Print grouped packets and calculate timings
-print("📡 Packets grouped by ngap.RAN_UE_NGAP_ID:\n")
+logging.info(f"📡 Packets grouped by ngap.RAN_UE_NGAP_ID")
 
 # Define message pairs (NAS msg_type or NGAP name)
 message_pairs = [
@@ -228,6 +242,8 @@ for ran_ue_id in sorted(ue_packets.keys()):
     print(f"📏 UE {ran_ue_id} lifetime: Frame {first_pkt['frame']} → {last_pkt['frame']} Δt = {total_lifetime:.3f}s\n")
     print()
 
+num = len(ue_packets.keys())
+
 # Group CSV rows by event_type
 grouped_csv_rows = defaultdict(list)
 for row in csv_rows:
@@ -261,17 +277,17 @@ for event_type, rows in grouped_csv_rows.items():
     write_header = not os.path.exists(filename) or os.stat(filename).st_size == 0
 
     with open(filename, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames = ["event_type", "total_duration", "average_latency", "num_ues", "effective_num_ues", "sum_latencies"])
+        writer = csv.DictWriter(f, fieldnames=["event_type", "total_duration", "average_latency", "num_ues", "effective_num_ues", "sum_latencies"])
         if write_header:
             writer.writeheader()
-        writer.writerow({
+        writer.writerows([{
             "event_type": event_type,
             "total_duration": f"{total_duration:.6f}",
             "average_latency": f"{average_latency:.6f}",
             "num_ues": num,
             "effective_num_ues": effective_num_ues,
             "sum_latencies": f"{sum_all_latencies:.6f}"
-        })
+        }])
 
     print(f"📄 Summary appended to {filename}")
     print()
