@@ -1,20 +1,30 @@
 import json
+import os
 
-path = "/home/alexandermoltu/pcap_captures/linear/core/100-open5gs-2025.04.25_13.07.15/"
-input_file = "udm1.json"
+path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_reg/100-open5gs-2025.04.28_11.59.09/"
+input_file = "udm.json"
 output_file = input_file + ".decoded.txt"
 
+# Improved cleaner
 def decode_payload(hex_str):
     try:
         hex_str_clean = hex_str.replace(":", "")
-        return bytes.fromhex(hex_str_clean).decode("utf-8", errors="ignore")
+        decoded_bytes = bytes.fromhex(hex_str_clean)
+        decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
+
+        # Remove non-printable characters except \n \r \t
+        cleaned_text = ''.join(c for c in decoded_text if c.isprintable() or c in '\n\r\t')
+        return cleaned_text
     except Exception:
         return ""
+
+# Ensure output directory exists
+os.makedirs("tmp", exist_ok=True)
 
 with open(path + input_file, "r") as f:
     packets = json.load(f)
 
-with open(output_file, "w") as out:
+with open("tmp/" + output_file, "w", encoding="utf-8") as out:
     for pkt in packets:
         layers = pkt.get("_source", {}).get("layers", {})
         frame_number = layers.get("frame", {}).get("frame.number", "unknown")
@@ -25,9 +35,8 @@ with open(output_file, "w") as out:
             continue
 
         decoded = decode_payload(payload)
-        if decoded.strip():  # Only print non-empty payloads
+        if decoded.strip():  # Only write non-empty
             line = f"Frame {frame_number}:\n{decoded}\n{'='*40}\n"
-            print(line)
             out.write(line)
 
-print(f"✅ Decoded TCP payloads printed and saved to {output_file}")
+print(f"✅ Cleaned and decoded TCP payloads saved to tmp/{output_file}")

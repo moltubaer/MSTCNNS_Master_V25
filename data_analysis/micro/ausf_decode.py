@@ -3,8 +3,8 @@ import re
 import csv
 
 # Set paths
-path = "/home/alexandermoltu/pcap_captures/linear/core/100-open5gs-2025.04.25_13.07.15/"
-input_file = "ausf1.json"
+path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_reg/100-open5gs-2025.04.28_11.59.09/"
+input_file = "ausf.json"
 output_csv = input_file + "_registration_events.csv"
 
 # Regex to match IMSI and SUCI

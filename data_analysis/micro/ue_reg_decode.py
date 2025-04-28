@@ -2,10 +2,12 @@ import json
 import re
 import csv
 
+# amf, ausf and udm
+
 # Set paths
-path = "/home/alexandermoltu/pcap_captures/linear/core/100-open5gs-2025.04.25_13.07.15/"
-input_file = "amf1.json"
-output_csv = input_file + "_registration_events.csv"
+path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_reg/100-open5gs-2025.04.28_11.59.09/"
+input_file = "udm.json"
+output_csv = input_file + "_ue_reg.csv"
 
 # Regex pattern to match full IMSI and SUCI
 imsi_pattern = re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE)
@@ -54,6 +56,11 @@ for pkt in packets:
     payload = tcp.get("tcp.payload")
     frame_number = layers.get("frame", {}).get("frame.number", "N/A")
     timestamp = layers.get("frame", {}).get("frame.time_epoch", "N/A")
+    srcport = int(layers.get("tcp", {}).get("tcp.srcport", 0))
+    dstport = int(layers.get("tcp", {}).get("tcp.dstport", 0))
+
+    # Simple direction logic: If srcport > dstport, assume send, otherwise recv
+    direction = "send" if srcport > dstport else "recv"
 
     if not payload:
         continue
@@ -79,36 +86,41 @@ for pkt in packets:
                         ue_sessions[norm_id] = {
                             "start_frame": int(frame_number),
                             "start_time": float(timestamp),
+                            "start_direction": direction,
                             "start_payload": outer_json,
                             "end_frame": int(frame_number),
                             "end_time": float(timestamp),
+                            "end_direction": direction,
                             "end_payload": outer_json
                         }
                     else:
-                        # Update end frame each time
                         ue_sessions[norm_id]["end_frame"] = int(frame_number)
                         ue_sessions[norm_id]["end_time"] = float(timestamp)
+                        ue_sessions[norm_id]["end_direction"] = direction
                         ue_sessions[norm_id]["end_payload"] = outer_json
 
 # === Write CSV ===
 with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
-    fieldnames = ["frame_number", "timestamp", "imsi", "event", "decoded_payload"]
+    fieldnames = ["frame_number", "timestamp", "direction", "imsi", "event", "decoded_payload"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    
+    # ✅ Write header once
     writer.writeheader()
-
+    
+    # ✅ Then loop over sessions
     for imsi, session in ue_sessions.items():
-        # Write start packet
         writer.writerow({
             "frame_number": session["start_frame"],
             "timestamp": f"{session['start_time']:.9f}",
+            "direction": session["start_direction"],
             "imsi": imsi,
             "event": "start",
             "decoded_payload": session["start_payload"]
         })
-        # Write end packet
         writer.writerow({
             "frame_number": session["end_frame"],
             "timestamp": f"{session['end_time']:.9f}",
+            "direction": session["end_direction"],
             "imsi": imsi,
             "event": "end",
             "decoded_payload": session["end_payload"]

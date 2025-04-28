@@ -2,9 +2,14 @@ import json
 import re
 import csv
 
+
+# Filter by
+#   O{"guami":{"plmnId":{"mcc":"001","mnc":"01"},"amfId":"020040"},"purgeFlag":true}
+#   {"nfInstanceId":"25f72894-20f0-41f0-8706-f376be264bbd","success":true,"timeStamp":"2025-04-28T12:33:14.596139+02:00","authType":"5G_AKA","servingNetworkName":"5G:mnc001.mcc001.3gppnetwork.org","authRemovalInd":true}
+
 # Set paths
-path = "/home/alexandermoltu/pcap_captures/linear/core/100-open5gs-2025.04.25_13.07.15/"
-input_file = "udm1.json"
+path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_reg/100-open5gs-2025.04.28_11.59.09/"
+input_file = "udm.json"
 output_csv = input_file + "_registration_events.csv"
 
 # Regex to match IMSI and SUCI
