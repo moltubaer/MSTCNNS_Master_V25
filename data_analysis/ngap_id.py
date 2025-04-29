@@ -94,7 +94,6 @@ def find_all_keys(data, target_key):
     elif isinstance(data, list):
         for item in data:
             yield from find_all_keys(item, target_key)
-    return found
 
 # Check if NAS is encrypted
 def is_nas_encrypted(layers):
