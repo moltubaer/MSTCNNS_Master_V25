@@ -1,12 +1,10 @@
 import json
 import csv
 
-# amf
-
 # === Paths ===
 path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_dereg/100-open5gs-2025.04.28_12.33.12/"
-input_file = "amf.json"
-output_csv = input_file + "_matched_frames.csv"
+input_file = "amf"
+output_csv = "./csv/" + input_file + "_ue_dereg.csv"
 
 # === Recursive helper to find RAN_UE_NGAP_ID ===
 def extract_ran_ue_ngap_id(obj):
@@ -41,7 +39,7 @@ def detect_release_command(obj):
 # === Main Processing ===
 matched_frames = {}
 
-with open(path + input_file, "r") as f:
+with open(path + input_file + ".json", "r") as f:
     packets = json.load(f)
 
 print(f"🔎 Loaded {len(packets)} packets.")
@@ -63,19 +61,17 @@ for pkt in packets:
     if not ran_ue_ngap_id:
         continue
 
-    # First appearance
     if ran_ue_ngap_id not in matched_frames:
         matched_frames[ran_ue_ngap_id] = {"first": (frame_number, timestamp), "release": None}
         print(f"📥 First packet for UE {ran_ue_ngap_id} at frame {frame_number}, timestamp {timestamp}")
 
-    # Detect release command
     if detect_release_command(ngap):
         matched_frames[ran_ue_ngap_id]["release"] = (frame_number, timestamp)
         print(f"📤 Release command for UE {ran_ue_ngap_id} at frame {frame_number}, timestamp {timestamp}")
 
-# === Write CSV ===
+# === Write to CSV ===
 with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
-    fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type"]
+    fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type", "direction"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
@@ -87,14 +83,16 @@ with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
                 "ran_ue_ngap_id": ran_ue_ngap_id,
                 "frame_number": first[0],
                 "timestamp": first[1],
-                "type": "first"
+                "type": "first",
+                "direction": "recv"  # <<< Hardcoded
             })
         if release:
             writer.writerow({
                 "ran_ue_ngap_id": ran_ue_ngap_id,
                 "frame_number": release[0],
                 "timestamp": release[1],
-                "type": "release"
+                "type": "release",
+                "direction": "send"  # <<< Hardcoded
             })
 
-print(f"✅ Matched frames written to {output_csv}")
+print(f"✅ Matched frames with direction written to {output_csv}")

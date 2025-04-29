@@ -6,8 +6,8 @@ import csv
 
 # === Set input/output paths ===
 path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_dereg/100-open5gs-2025.04.28_12.33.12/"
-input_file = "udm.json"
-output_csv = input_file + "_deregistration_events.csv"
+input_file = "udm"
+output_csv = "./csv/" + input_file + "_ue_dereg.csv"
 
 # === Deregistration regex patterns ===
 patterns = [
@@ -37,7 +37,7 @@ def match_pattern_type(decoded_text):
 deregistration_events = []
 pattern_counters = {0: 1, 1: 1}  # Initialize counters for pattern 0 and 1
 
-with open(path + input_file, "r") as f:
+with open(path + input_file + ".json", "r") as f:
     packets = json.load(f)
 
 for pkt in packets:
