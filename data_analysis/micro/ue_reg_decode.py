@@ -6,8 +6,8 @@ import csv
 
 # Set paths
 path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_reg/100-open5gs-2025.04.28_11.59.09/"
-input_file = "udm.json"
-output_csv = input_file + "_ue_reg.csv"
+input_file = "udm"
+output_csv = "csv/" + input_file + "_ue_reg.csv"
 
 # Regex pattern to match full IMSI and SUCI
 imsi_pattern = re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE)
@@ -47,7 +47,7 @@ def normalize_identity(imsi_or_suci):
         return imsi_or_suci  # for now, keep it simple
     return imsi_or_suci
 
-with open(path + input_file, "r") as f:
+with open(path + input_file + ".json", "r") as f:
     packets = json.load(f)
 
 for pkt in packets:
