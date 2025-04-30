@@ -105,9 +105,11 @@ for pod in "${matched_pods[@]}"; do
     if [[ "$pod" == "upf-0" ]]; then
         echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
         timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" | tshark -F pcap -w "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     else
         echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
         timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" | tshark -F pcap -w "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     fi
 
     pod_pids+=($!)  # Store the process ID of the kubectl sniff command
@@ -128,7 +130,6 @@ for pid in "${pod_pids[@]}"; do
     }
 done
 
-# Wait for the host capture process to complete
 wait "$host_pid" || {
     echo "[ERROR] Host capture process (PID: $host_pid) failed."
     exit 1
