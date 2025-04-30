@@ -105,7 +105,7 @@ pod_pids=()
 for pod in "${matched_pods[@]}"; do
     echo "  [+] $pod capturing on interface '$pod_interface' for $duration seconds"
 
-    if [[ "$pod" == "upf-0"]]; then
+    if [[ "$pod" == "upf-0" ]]; then
         # capture with sniff for upf,
         sudo timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir" > /dev/null 2>&1 &
     else
