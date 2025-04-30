@@ -121,18 +121,29 @@ done
 
 echo "[*] Waiting for all tcpdump and kubectl sniff processes to complete..."
 
+# Track failures
+failed_pids=()
+
 # Wait for all pod capture processes to complete
 for pid in "${pod_pids[@]}"; do
-    wait "$pid" || {
-        echo "[ERROR] A pod capture process (PID: $pid) failed."
-        exit 1
-    }
+    if ! wait "$pid"; then
+        echo "[ERROR] A pod capture process (PID: $pid) failed. Check the corresponding log file for details."
+        failed_pids+=("$pid")  # Track the failed PID
+    fi
 done
 
-wait "$host_pid" || {
-    echo "[ERROR] Host capture process (PID: $host_pid) failed."
+# Wait for the host capture process to complete
+if ! wait "$host_pid"; then
+    echo "[ERROR] Host capture process (PID: $host_pid) failed. Check $host_output_dir/host_tcpdump.log for details."
+    failed_pids+=("$host_pid")  # Track the failed PID
+fi
+
+# Check if any processes failed
+if [ ${#failed_pids[@]} -gt 0 ]; then
+    echo "[ERROR] The following processes failed: ${failed_pids[*]}"
+    echo "Please check the corresponding log files for more details."
     exit 1
-}
+fi
 
 echo "[*] All tcpdump and kubectl sniff processes completed successfully."
 
