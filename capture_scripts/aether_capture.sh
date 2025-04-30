@@ -91,8 +91,10 @@ echo "[*] Starting tcpdump on host interface: $host_interface"
 host_pcap_path="$host_output_dir/host_capture.pcap"
 # ! what is this? why capture on host?
 # todo: find out later
-sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 &
-host_pid=$!
+sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 || {
+    echo "[ERROR] Failed to start tcpdump on host interface."
+    exit 1
+}
 
 # ===
 # POD CAPTURES
@@ -107,9 +109,9 @@ for pod in "${matched_pods[@]}"; do
 
     if [[ "$pod" == "upf-0" ]]; then
         # capture with sniff for upf,
-        sudo timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir" > /dev/null 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir" > /dev/null 2>&1 &
     else
-        sudo timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir" > /dev/null 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir" > /dev/null 2>&1 &
     fi
     pod_pids+=($!)
 done
@@ -119,8 +121,17 @@ done
 # ===
 
 echo "[*] Waiting for all tcpdump processes to complete..."
-wait "${pod_pids[@]}"
-wait "$host_pid"
+for pid in "${pod_pids[@]}"; do
+    wait "$pid" || {
+        echo "[ERROR] A pod capture process failed."
+        exit 1
+    }
+done
+wait "$host_pid" || {
+    echo "[ERROR] Host capture process failed."
+    exit 1
+}
+
 echo "[*] All tcpdump processes completed"
 
 echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
