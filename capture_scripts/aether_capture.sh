@@ -85,16 +85,12 @@ mkdir -p "$host_output_dir"
 # start metrics capture in background for 120 seconds
 python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
 
-echo "[*] Starting tcpdump on host interface: $host_interface"
-
-
-host_pcap_path="$host_output_dir/host_capture.pcap"
-# ! what is this? why capture on host?
-# todo: find out later
-sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 || {
-    echo "[ERROR] Failed to start tcpdump on host interface."
+echo "[DEBUG] Starting tcpdump on host interface: $host_interface"
+sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/host_tcpdump.log" 2>&1 || {
+    echo "[ERROR] Failed to start tcpdump on host interface. Check $host_output_dir/host_tcpdump.log for details."
     exit 1
 }
+echo "[DEBUG] tcpdump on host interface completed successfully."
 
 # ===
 # POD CAPTURES
