@@ -7,7 +7,7 @@ import csv
 #   PCF, SMF, UDM
 
 # Set paths
-path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_est/100-open5gs-2025.04.28_12.27.02/"
+path = "/mnt/c/Dev/master/pcap_captures/full_test_core/pdu_est/100-open5gs-2025.04.28_12.27.02/"
 input_file = "smf"
 output_csv = "./csv/" + input_file + "_pdu_rel.csv"
 
