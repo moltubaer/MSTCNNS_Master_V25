@@ -7,8 +7,10 @@ from collections import defaultdict
 #   AMF
 
 # === Paths ===
-path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_est/100-open5gs-2025.04.28_12.27.02/"
-input_file = "amf"
+# path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_est/100-open5gs-2025.04.28_12.27.02/"
+path = "/Users/marcusjohannessen/Desktop/NTNU/vår-2025/"
+# input_file = "amf"
+input_file = "pkt_50"
 output_csv = "./csv/" + input_file + "_pdu_est.csv"
 
 # === Constants ===
