@@ -83,15 +83,13 @@ mkdir -p "$host_output_dir"
 # HOST OS CAPTURE
 # ===
 
-# start metrics capture in background for 120 seconds
+# Start metrics capture in the background for 120 seconds
 python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
 
 echo "[DEBUG] Starting tcpdump on host interface: $host_interface"
-sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/host_tcpdump.log" 2>&1 || {
-    echo "[ERROR] Failed to start tcpdump on host interface. Check $host_output_dir/host_tcpdump.log for details."
-    exit 1
-}
-echo "[DEBUG] tcpdump on host interface completed successfully."
+sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/host_tcpdump.log" 2>&1 &
+host_pid=$!  # Store the process ID of the tcpdump command
+echo "[DEBUG] tcpdump on host interface started in the background (PID: $host_pid)."
 
 # ===
 # POD CAPTURES
@@ -99,46 +97,48 @@ echo "[DEBUG] tcpdump on host interface completed successfully."
 
 echo "[*] Starting tcpdump in pods..."
 
-pod_pids=()
+pod_pids=()  # Array to store process IDs of pod captures
 
 for pod in "${matched_pods[@]}"; do
     echo "  [+] $pod capturing on interface '$pod_interface' for $duration seconds"
 
     if [[ "$pod" == "upf-0" ]]; then
         echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir" > "$host_output_dir/${pod}_sniff.log" 2>&1 || {
-            echo "[ERROR] Failed to start kubectl sniff for pod: $pod (UPF). Check $host_output_dir/${pod}_sniff.log for details."
-            exit 1
-        }
-        echo "[DEBUG] kubectl sniff for pod: $pod (UPF) completed successfully."
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
     else
         echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir" > "$host_output_dir/${pod}_sniff.log" 2>&1 || {
-            echo "[ERROR] Failed to start kubectl sniff for pod: $pod. Check $host_output_dir/${pod}_sniff.log for details."
-            exit 1
-        }
-        echo "[DEBUG] kubectl sniff for pod: $pod completed successfully."
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
     fi
-    pod_pids+=($!)
+
+    pod_pids+=($!)  # Store the process ID of the kubectl sniff command
+    echo "[DEBUG] kubectl sniff for pod: $pod started in the background (PID: ${pod_pids[-1]})."
 done
 
 # ===
-# WAITING FOR ALL CAMPTURES
+# WAITING FOR ALL CAPTURES
 # ===
 
-echo "[*] Waiting for all tcpdump processes to complete..."
+echo "[*] Waiting for all tcpdump and kubectl sniff processes to complete..."
+
+# Wait for all pod capture processes to complete
 for pid in "${pod_pids[@]}"; do
     wait "$pid" || {
-        echo "[ERROR] A pod capture process failed."
+        echo "[ERROR] A pod capture process (PID: $pid) failed."
         exit 1
     }
 done
+
+# Wait for the host capture process to complete
 wait "$host_pid" || {
-    echo "[ERROR] Host capture process failed."
+    echo "[ERROR] Host capture process (PID: $host_pid) failed."
     exit 1
 }
 
-echo "[*] All tcpdump processes completed"
+echo "[*] All tcpdump and kubectl sniff processes completed successfully."
+
+# ===
+# POST-CAPTURE TASKS
+# ===
 
 echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
 sudo chown -R ubuntu:ubuntu "$host_output_dir"
