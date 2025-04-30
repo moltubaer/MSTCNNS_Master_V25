@@ -128,7 +128,9 @@ failed_pids=()
 for pid in "${pod_pids[@]}"; do
     if ! wait "$pid"; then
         exit_code=$?
-        if [ $exit_code -eq 124 ]; then
+        if [ $exit_code -eq 0 ]; then
+            echo "[INFO] Pod capture process (PID: $pid) completed successfully."
+        elif [ $exit_code -eq 124 ]; then
             echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
         else
             echo "[ERROR] A pod capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
@@ -140,7 +142,9 @@ done
 # Wait for the host capture process to complete
 if ! wait "$host_pid"; then
     exit_code=$?
-    if [ $exit_code -eq 124 ]; then
+    if [ $exit_code -eq 0 ]; then
+        echo "[INFO] Host capture process (PID: $host_pid) completed successfully."
+    elif [ $exit_code -eq 124 ]; then
         echo "[INFO] Host capture process (PID: $host_pid) was terminated by timeout. Treating as success."
     else
         echo "[ERROR] Host capture process (PID: $host_pid) failed with exit code $exit_code. Check $host_output_dir/host_tcpdump.log for details."
