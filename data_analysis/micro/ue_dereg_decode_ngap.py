@@ -1,98 +1,106 @@
-import json
 import csv
+import os
+import xml.etree.ElementTree as ET
+from collections import defaultdict
+
+# UE Deregistration
+#   AMF
 
 # === Paths ===
-path = "/home/alexandermoltu/pcap_captures/full_test_core/ue_dereg/100-open5gs-2025.04.28_12.33.12/"
-input_file = "amf"
-output_csv = "./csv/" + input_file + "_ue_dereg.csv"
+path = "../data/"
+input_file = "amf_ue_dereg"
+output_csv = "./csv/" + input_file + ".csv"
 
-# === Recursive helper to find RAN_UE_NGAP_ID ===
-def extract_ran_ue_ngap_id(obj):
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            if key == "ngap.RAN_UE_NGAP_ID":
-                return value
-            result = extract_ran_ue_ngap_id(value)
-            if result is not None:
-                return result
-    elif isinstance(obj, list):
-        for item in obj:
-            result = extract_ran_ue_ngap_id(item)
-            if result is not None:
-                return result
-    return None
+# === Constants ===
+FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport
+RELEASE_PROCEDURE_CODE = "41"  # PDU Session Resource Setup Request
 
-# === Recursive helper to detect UEContextReleaseCommand ===
-def detect_release_command(obj):
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            if key == "ngap.procedureCode" and value == "41":
-                return True
-            if detect_release_command(value):
-                return True
-    elif isinstance(obj, list):
-        for item in obj:
-            if detect_release_command(item):
-                return True
-    return False
+# === Parse PDML ===
+tree = ET.parse(path + input_file + ".pdml")
+root = tree.getroot()
 
-# === Main Processing ===
-matched_frames = {}
+# === Extract Relevant Packet Info ===
+output = []
 
-with open(path + input_file + ".json", "r") as f:
-    packets = json.load(f)
+for packet in root.findall("packet"):
+    frame_number = None
+    timestamp = None
+    current_ran_ids = []
+    current_procedure_codes = []
+    current_pdu_types = []
 
-print(f"🔎 Loaded {len(packets)} packets.")
+    for proto in packet.findall("proto"):
+        if proto.get("name") == "frame":
+            for field in proto.iter("field"):
+                if field.get("name") == "frame.number":
+                    frame_number = int(field.get("show"))
+                elif field.get("name") == "frame.time_epoch":
+                    timestamp = field.get("show")
 
-for pkt in packets:
-    layers = pkt.get("_source", {}).get("layers", {})
-    ngap = layers.get("ngap", {})
-    frame_number = layers.get("frame", {}).get("frame.number", "N/A")
-    timestamp = layers.get("frame", {}).get("frame.time_epoch", "N/A")
+        elif proto.get("name") == "ngap":
+            for field in proto.iter("field"):
+                if field.get("name") == "ngap.RAN_UE_NGAP_ID":
+                    current_ran_ids.append(field.get("show"))
+                elif field.get("name") == "ngap.procedureCode":
+                    current_procedure_codes.append(field.get("show"))
+                elif field.get("name") == "ngap.initiatingMessage_element":
+                    current_pdu_types.append("initiating")
+                elif field.get("name") == "ngap.successfulOutcome_element":
+                    current_pdu_types.append("successful")
 
-    if not ngap:
-        continue
+    # Match RAN UE IDs with their proc_code and pdu_type
+    for idx, ran_id in enumerate(current_ran_ids):
+        proc_code = current_procedure_codes[idx] if idx < len(current_procedure_codes) else (current_procedure_codes[-1] if current_procedure_codes else None)
+        pdu_type = current_pdu_types[idx] if idx < len(current_pdu_types) else (current_pdu_types[-1] if current_pdu_types else None)
 
-    ran_ue_ngap_id = extract_ran_ue_ngap_id(ngap)
+        output.append((ran_id, frame_number, timestamp, proc_code, pdu_type))
+        print(f"[DEBUG] Frame {frame_number}: ran_id={ran_id}, procedureCode={proc_code}, pdu_type={pdu_type}")
 
-    if ran_ue_ngap_id:
-        print(f"➡️ Found RAN_UE_NGAP_ID={ran_ue_ngap_id} at frame {frame_number}")
+# === Organize by RAN UE NGAP ID ===
+packets_by_id = defaultdict(list)
 
-    if not ran_ue_ngap_id:
-        continue
+for ran_id, frame_number, timestamp, procedure_code, pdu_type in output:
+    packets_by_id[ran_id].append((frame_number, timestamp, procedure_code, pdu_type))
 
-    if ran_ue_ngap_id not in matched_frames:
-        matched_frames[ran_ue_ngap_id] = {"first": (frame_number, timestamp), "release": None}
-        print(f"📥 First packet for UE {ran_ue_ngap_id} at frame {frame_number}, timestamp {timestamp}")
+# === Identify First and Release Messages ===
+results = []
 
-    if detect_release_command(ngap):
-        matched_frames[ran_ue_ngap_id]["release"] = (frame_number, timestamp)
-        print(f"📤 Release command for UE {ran_ue_ngap_id} at frame {frame_number}, timestamp {timestamp}")
+for ran_id, packet_list in packets_by_id.items():
+    first = None
+    release = None
+
+    for frame_number, timestamp, procedure_code, pdu_type in sorted(packet_list):
+        if procedure_code == FIRST_PROCEDURE_CODE and pdu_type == "initiating" and not first:
+            first = (frame_number, timestamp)
+        elif procedure_code == RELEASE_PROCEDURE_CODE and pdu_type == "initiating":
+            release = (frame_number, timestamp)
+
+    if first:
+        results.append({
+            "ran_ue_ngap_id": ran_id,
+            "frame_number": first[0],
+            "timestamp": first[1],
+            "type": "first",
+            "direction": "recv"
+        })
+    if release:
+        results.append({
+            "ran_ue_ngap_id": ran_id,
+            "frame_number": release[0],
+            "timestamp": release[1],
+            "type": "release",
+            "direction": "send"
+        })
 
 # === Write to CSV ===
-with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
+print(f"[INFO] Writing results to {output_csv}")
+os.makedirs(os.path.dirname(output_csv), exist_ok=True)
+
+with open(output_csv, "w", newline="") as csvfile:
     fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type", "direction"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
+    for row in results:
+        writer.writerow(row)
 
-    for ran_ue_ngap_id, frames in matched_frames.items():
-        first = frames.get("first")
-        release = frames.get("release")
-        if first:
-            writer.writerow({
-                "ran_ue_ngap_id": ran_ue_ngap_id,
-                "frame_number": first[0],
-                "timestamp": first[1],
-                "type": "first",
-                "direction": "recv"  # <<< Hardcoded
-            })
-        if release:
-            writer.writerow({
-                "ran_ue_ngap_id": ran_ue_ngap_id,
-                "frame_number": release[0],
-                "timestamp": release[1],
-                "type": "release",
-                "direction": "send"  # <<< Hardcoded
-            })
-
-print(f"✅ Matched frames with direction written to {output_csv}")
+print("✅ Done!")
