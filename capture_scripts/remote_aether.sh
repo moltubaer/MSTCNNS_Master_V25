@@ -37,18 +37,6 @@ done
 # Execute Remote Scripts
 # ====
 
-# Function to check SSH connection
-check_ssh_connection() {
-  local host="$1"
-  echo "[*] Checking SSH connection to $host..."
-  if ssh -o BatchMode=yes -o ConnectTimeout=5 "$host" "exit" 2>/dev/null; then
-    echo "[✓] SSH connection to $host successful."
-  else
-    echo "❌ Failed to connect to $host. Please check your SSH configuration."
-    exit 1
-  fi
-}
-
 # Function to run a remote script and handle errors
 run_remote_script() {
   local key_file="$1"
@@ -62,10 +50,6 @@ run_remote_script() {
   echo "[*] Script on $host is running in the background (PID: $pid)."
   echo $pid  # Return the PID of the background process
 }
-
-# Check SSH connections
-check_ssh_connection "$core2"
-check_ssh_connection "$ueransim"
 
 # Run scripts on both remote machines
 PID1=$(run_remote_script "$core2_key_path" "$core2" "$core2_script" "$DURATION")
