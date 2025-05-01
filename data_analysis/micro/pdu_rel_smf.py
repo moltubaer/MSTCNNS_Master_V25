@@ -6,9 +6,9 @@ import csv
 #   SMF
 
 # === Set input/output paths ===
-path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_rel/100-open5gs-2025.04.28_12.29.59/"
-input_file = "smf.test"
-output_csv = "./csv/" + input_file + "_ue_dereg.csv"
+path = "../data/"
+input_file = "smf_pdu_rel"
+output_csv = "./csv/" + input_file + ".csv"
 
 # === Deregistration regex patterns ===
 patterns = [

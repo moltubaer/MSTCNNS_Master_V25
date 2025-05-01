@@ -2,7 +2,7 @@ import json
 import os
 
 path = "../data/"
-input_file = "udm_pdu_est"
+input_file = "smf_pdu_rel"
 output_file = input_file + ".decoded.txt"
 
 # Improved cleaner
