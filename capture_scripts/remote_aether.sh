@@ -36,18 +36,20 @@ run_remote_script() {
 
   # Add `source ~/.profile` for core2
   if [[ "$host" == "$core2" ]]; then
-    ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+    ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1
   else
-    ssh -tt -i "$key_file" "$host" "bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+    ssh -tt -i "$key_file" "$host" "bash $script $duration" > /tmp/${host}_output.log 2>&1
   fi
 
-  local pid=$!  # Capture the PID of the background process
-  echo "$pid"  # Return only the PID to stdout
+  local exit_code=$?  # Capture the exit code of the SSH command
+  echo "$exit_code"  # Return the exit code to the caller
 }
 
-# Run scripts on both remote machines
-PID1=$(run_remote_script "$core2_key_path" "$core2" "$core2_script" "$DURATION")
-PID2=$(run_remote_script "$ueransim_key_path" "$ueransim" "$ueransim_script" "$DURATION")
+# Run scripts on both remote machines in the background
+run_remote_script "$core2_key_path" "$core2" "$core2_script" "$DURATION" &
+PID1=$!
+run_remote_script "$ueransim_key_path" "$ueransim" "$ueransim_script" "$DURATION" &
+PID2=$!
 
 # Function to wait for a process and handle errors
 wait_for_process() {
