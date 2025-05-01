@@ -1,25 +1,17 @@
 #!/bin/bash
 
-# RUN ON LOCAL MACHINE
-# ===
 # CONFIGURATION
-# ===
-
-set -a
-source ../.env
-set +a
-
 core2="ubuntu@10.100.51.81"
+core2_key_path="~/.ssh/core2.key"
 ueransim="ubuntu@10.100.51.82"
+ueransim_key_path="~/.ssh/marc_ueransim.key"
 
 core2_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/aether_capture.sh"
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
 
-DURATION=120  # Default duration
+DURATION=30  # Default duration
 
-# ===
 # Parse Optional Arguments
-# ===
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     --duration)
@@ -33,10 +25,6 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
-# ====
-# Execute Remote Scripts
-# ====
-
 # Function to run a remote script and handle errors
 run_remote_script() {
   local key_file="$1"
@@ -44,20 +32,22 @@ run_remote_script() {
   local script="$3"
   local duration="$4"
 
-  echo "[*] Running script on $host..."
-  ssh -tt -i "$key_file" "$host" "bash $script $DURATION" > /tmp/${host}_output.log 2>&1 &
-  local pid=$!
-  echo "[*] Script with keyfile: $key_file, on $host is running in the background (PID: $pid)."
-  echo $pid  # Return the PID of the background process
+  echo "[*] Running script on $host..." >&2  # Redirect debug message to stderr
+
+  # Add `source ~/.profile` for core2
+  if [[ "$host" == "$core2" ]]; then
+    ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+  else
+    ssh -tt -i "$key_file" "$host" "bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+  fi
+
+  local pid=$!  # Capture the PID of the background process
+  echo "$pid"  # Return only the PID to stdout
 }
 
 # Run scripts on both remote machines
 PID1=$(run_remote_script "$core2_key_path" "$core2" "$core2_script" "$DURATION")
 PID2=$(run_remote_script "$ueransim_key_path" "$ueransim" "$ueransim_script" "$DURATION")
-
-# ====
-# WAIT FOR BOTH TO FINISH
-# ===
 
 # Function to wait for a process and handle errors
 wait_for_process() {
