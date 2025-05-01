@@ -4,12 +4,12 @@ import re
 import csv
 
 # PDU Session Establishment
-#   PCF, SMF, UDM
+#   UDM
 
 # Set paths
-path = "/mnt/c/Dev/master/pcap_captures/full_test_core/pdu_est/100-open5gs-2025.04.28_12.27.02/"
-input_file = "smf"
-output_csv = "./csv/" + input_file + "_pdu_rel.csv"
+path = "../data/"
+input_file = "udm_pdu_est"
+output_csv = "./csv/" + input_file + ".csv"
 
 # Regex to match IMSI and SUCI
 imsi_pattern = re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE)

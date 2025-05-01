@@ -8,8 +8,8 @@ from collections import defaultdict
 
 # === Paths ===
 path = "../data/"
-input_file = "amf"
-output_csv = "./csv/" + input_file + "_pdu_est.csv"
+input_file = "amf_pdu_est"
+output_csv = "./csv/" + input_file + ".csv"
 
 # === Constants ===
 FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport

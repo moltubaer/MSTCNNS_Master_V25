@@ -3,6 +3,9 @@ import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 
+# PDU Session Release
+#   AMF
+
 # === Paths ===
 path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_rel/100-open5gs-2025.04.28_12.29.59/"
 input_file = "amf"

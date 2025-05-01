@@ -2,18 +2,18 @@ import json
 import re
 import csv
 
-# PDU Session Release
-#   SMF
+# UE Deregistration
+#   UDM
 
 # === Set input/output paths ===
-path = "/home/alexandermoltu/pcap_captures/full_test_core/pdu_rel/100-open5gs-2025.04.28_12.29.59/"
-input_file = "smf.test"
-output_csv = "./csv/" + input_file + "_ue_dereg.csv"
+path = "../data/"
+input_file = "udm_ue_dereg"
+output_csv = "./csv/" + input_file + ".csv"
 
 # === Deregistration regex patterns ===
 patterns = [
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}')
+    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
+    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
 ]
 
 # === Helper: decode hex TCP payload ===
@@ -57,6 +57,8 @@ for pkt in packets:
     elif pkttype == "4":
         direction = "send"
 
+    # direction = "send" if srcport > dstport else "recv"
+
     if not payload:
         continue
 
@@ -73,12 +75,12 @@ for pkt in packets:
             "timestamp": timestamp,
             "direction": direction,
             "id": event_id,
-            "decoded_payload": decoded    # Don't print because of linebreaks in the csv file.
+            "decoded_payload": decoded
         })
 
 # === Write to CSV ===
 with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
-    fieldnames = ["frame_number", "timestamp", "direction", "id", "decoded_payload"]    
+    fieldnames = ["frame_number", "timestamp", "direction", "id", "decoded_payload"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
