@@ -45,9 +45,9 @@ run_remote_script() {
   local duration="$4"
 
   echo "[*] Running script on $host..."
-  ssh -tt -i "$key_file" "$host" "sudo bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+  ssh -tt -i "$key_file" "$host" "bash $script $DURATION" > /tmp/${host}_output.log 2>&1 &
   local pid=$!
-  echo "[*] Script on $host is running in the background (PID: $pid)."
+  echo "[*] Script with keyfile: $key_file, on $host is running in the background (PID: $pid)."
   echo $pid  # Return the PID of the background process
 }
 
