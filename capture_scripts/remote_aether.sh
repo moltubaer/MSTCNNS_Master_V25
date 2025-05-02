@@ -9,7 +9,7 @@ ueransim_key_path="~/.ssh/marc_ueransim.key"
 core2_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/aether_capture.sh"
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
 
-DURATION=30  # Default duration
+DURATION=120  # Default duration
 
 # Parse Optional Arguments
 while [[ "$#" -gt 0 ]]; do
@@ -32,7 +32,7 @@ run_remote_script() {
   local script="$3"
   local duration="$4"
 
-  echo "[*] Running script on $host..." >&2  # Redirect debug message to stderr
+  echo "[*] Running capture-script on $host for $duration seconds..." >&2  # Redirect debug message to stderr
 
   # Add `source ~/.profile` for core2
   if [[ "$host" == "$core2" ]]; then
