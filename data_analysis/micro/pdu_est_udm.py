@@ -60,7 +60,7 @@ for pkt in packets:
     tcp = layers.get("tcp", {})
     payload = tcp.get("tcp.payload")
     frame_number = layers.get("frame", {}).get("frame.number", "N/A")
-    timestamp = layers.get("frame", {}).get("frame.time_epoch", "N/A")
+    timestamp = layers.get("frame", {}).get("frame.time_relative", "N/A")
     direction = "unknown"
 
     sll = layers.get("sll", {})

@@ -51,7 +51,7 @@ for pkt in packets:
     tcp = layers.get("tcp", {})
     payload = tcp.get("tcp.payload")
     frame_number = layers.get("frame", {}).get("frame.number", "N/A")
-    timestamp = layers.get("frame", {}).get("frame.time_epoch", "N/A")
+    timestamp = layers.get("frame", {}).get("frame.time_relative", "N/A")
     pkttype = layers.get("sll", {}).get("sll.pkttype")
     direction = "recv" if pkttype == "0" else "send" if pkttype == "4" else "unknown"
 

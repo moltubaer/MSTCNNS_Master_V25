@@ -91,7 +91,7 @@ def group_packets_by_ran_ue_id(root):
                 for field in proto.iter('field'):
                     if field.get('name') == 'frame.number':
                         frame = int(field.get('show'))
-                    if field.get('name') == 'frame.time_epoch':
+                    if field.get('name') == 'frame.time_relative':
                         relative = float(field.get('show'))
 
         if frame == -1 or relative == -1.0:

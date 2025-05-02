@@ -34,7 +34,7 @@ for packet in root.findall("packet"):
             for field in proto.iter("field"):
                 if field.get("name") == "frame.number":
                     frame_number = int(field.get("show"))
-                elif field.get("name") == "frame.time_epoch":
+                elif field.get("name") == "frame.time_relative":
                     timestamp = field.get("show")
 
         elif proto.get("name") == "ngap":

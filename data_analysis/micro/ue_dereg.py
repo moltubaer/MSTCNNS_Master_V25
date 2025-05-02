@@ -46,7 +46,7 @@ for pkt in packets:
     tcp = layers.get("tcp", {})
     payload = tcp.get("tcp.payload")
     frame_number = layers.get("frame", {}).get("frame.number", "N/A")
-    timestamp = layers.get("frame", {}).get("frame.time_epoch", "N/A")
+    timestamp = layers.get("frame", {}).get("frame.time_relative", "N/A")
     srcport = int(layers.get("tcp", {}).get("tcp.srcport", 0))
     dstport = int(layers.get("tcp", {}).get("tcp.dstport", 0))
 
