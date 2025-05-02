@@ -1,3 +1,6 @@
 /tmp/*
 /captures
 /plots
+*.csv
+*.json
+*.pdml
