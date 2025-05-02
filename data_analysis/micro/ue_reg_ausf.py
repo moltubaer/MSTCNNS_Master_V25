@@ -6,13 +6,8 @@ import string
 # UE Registration
 #   AUSF, UDM
 
-import json
-import re
-import csv
-import string
-
 # Paths
-path = "../data/"
+path = "../data/core_ue_reg_100/"
 input_file = "ausf_ue_reg"
 output_csv = "csv/" + input_file + ".csv"
 

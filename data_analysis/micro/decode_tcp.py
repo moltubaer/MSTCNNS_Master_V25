@@ -1,8 +1,8 @@
 import json
 import os
 
-path = "../data/"
-input_file = "smf_pdu_rel"
+path = "../data/core_ue_reg_100/"
+input_file = "udm_ue_reg"
 output_file = input_file + ".decoded.txt"
 
 # Improved cleaner

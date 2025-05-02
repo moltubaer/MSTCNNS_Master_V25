@@ -132,7 +132,7 @@ def write_grouped_packets_to_csv(ue_packets, output_csv):
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
     with open(output_csv, "w", newline="") as csvfile:
-        fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type", "direction"]
+        fieldnames = ["id", "frame_number", "timestamp", "type", "direction"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
@@ -154,7 +154,7 @@ def write_grouped_packets_to_csv(ue_packets, output_csv):
 
                 # Write to CSV
                 writer.writerow({
-                    "ran_ue_ngap_id": ran_ue_ngap_id,
+                    "id": ran_ue_ngap_id,
                     "frame_number": packet["frame"],
                     "timestamp": packet["relative"],
                     "type": packet_type,

@@ -77,7 +77,7 @@ for ran_id, packet_list in packets_by_id.items():
 
     if first:
         results.append({
-            "ran_ue_ngap_id": ran_id,
+            "id": ran_id,
             "frame_number": first[0],
             "timestamp": first[1],
             "type": "first",
@@ -85,7 +85,7 @@ for ran_id, packet_list in packets_by_id.items():
         })
     if release:
         results.append({
-            "ran_ue_ngap_id": ran_id,
+            "id": ran_id,
             "frame_number": release[0],
             "timestamp": release[1],
             "type": "release",
@@ -97,7 +97,7 @@ print(f"[INFO] Writing results to {output_csv}")
 os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
 with open(output_csv, "w", newline="") as csvfile:
-    fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type", "direction"]
+    fieldnames = ["id", "frame_number", "timestamp", "type", "direction"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     for row in results:

@@ -4,16 +4,16 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 
 # === Paths ===
-path = "../data/"
-input_file = "ueransim_pdu_rel"
+path = "../data/ueransim_full/"
+input_file = "500.ue_reg"
 output_csv = "./csv/" + input_file + ".csv"
 
 # === Procedure Code Pairs (Initiating -> Release) ===
 PROCEDURE_CODE_PAIRS = [
-    # {"first": "15", "release": "14"},   # UE Registration
+    {"first": "15", "release": "14"},   # UE Registration
     # {"first": "46", "release": "41"},   # UE Deregistration
     # {"first": "46", "release": "29"},   # PDU Session Establishment
-    {"first": "46", "release": "28"},   # PDU Session Release
+    # {"first": "46", "release": "28"},   # PDU Session Release
 ]
 
 # === Parse PDML ===
@@ -91,7 +91,7 @@ for ran_id, packet_list in packets_by_id.items():
 
         if first:
             results.append({
-                "ran_ue_ngap_id": ran_id,
+                "id": ran_id,
                 "frame_number": first[0],
                 "timestamp": first[1],
                 "type": "first",
@@ -100,7 +100,7 @@ for ran_id, packet_list in packets_by_id.items():
             })
         if release:
             results.append({
-                "ran_ue_ngap_id": ran_id,
+                "id": ran_id,
                 "frame_number": release[0],
                 "timestamp": release[1],
                 "type": "release",
@@ -113,7 +113,7 @@ print(f"[INFO] Writing results to {output_csv}")
 os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
 with open(output_csv, "w", newline="") as csvfile:
-    fieldnames = ["ran_ue_ngap_id", "frame_number", "timestamp", "type", "procedure_code", "direction"]
+    fieldnames = ["id", "frame_number", "timestamp", "type", "procedure_code", "direction"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
     for row in results:
