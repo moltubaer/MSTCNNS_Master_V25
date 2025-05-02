@@ -22,7 +22,7 @@ mean_delay = 0.01   # 10 ms
 # === Core IMSI Parameters ===
 open5gs_imsi_str = "001010000000001"
 free5gc_imsi_str = "208930000000001"
-aether_imsi_str = "208930100000001"
+aether_imsi_str = "208930100006001"
 
 # === IMSI Calculation Base ===
 if args.core == "open5gs":
