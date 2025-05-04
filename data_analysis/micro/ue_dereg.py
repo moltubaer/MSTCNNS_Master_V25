@@ -1,14 +1,21 @@
 import json
 import re
 import csv
+import argparse
 
 # UE Deregistration
 #   UDM
 
-# === Set input/output paths ===
-path = "../data/"
-input_file = "udm_ue_dereg"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--count", "-c", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/core_ue_dereg/"
+input_file = f"{args.pattern}_ue_dereg{args.count}"
+output_csv = f"csv/{input_file}.csv"
 
 # === Deregistration regex patterns ===
 patterns = [

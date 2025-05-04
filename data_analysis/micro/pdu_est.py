@@ -3,19 +3,39 @@ import json
 import re
 import csv
 from collections import defaultdict
+import argparse
 
 # PDU Session Establishment
-#   PCF
+#   PCF, SMF
 
-# Set paths
-path = "../data/"
-input_file = "pcf_pdu_est"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
 
-patterns = [
+# === Input/Output ===
+path = "../data/core_pdu_est/"
+input_file = f"{args.pattern}_pdu_est{args.count}"
+output_csv = f"csv/{input_file}.csv"
+
+# === Pattern Definitions ===
+pattern_pcf = [
     re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*?"pduSessionId"\s*:\s*\d+', re.DOTALL),
     re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*?"ipv4Addr"\s*:\s*"\d+\.\d+\.\d+\.\d+"', re.DOTALL)
 ]
+pattern_smf = [
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"pei"\s*:\s*"imeisv-\d+".*?"n1SmMsg".*?"smContextStatusUri"', re.DOTALL),
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"subsSessAmbr".*?"sliceInfo"', re.DOTALL)
+]
+
+# === Select Pattern Set ===
+if args.pattern == "pcf":
+    patterns = pattern_pcf
+elif args.pattern == "smf":
+    patterns = pattern_smf
+else:
+    raise ValueError(f"Unknown pattern set: {args.pattern}")
 
 # === Helper: decode hex TCP payload ===
 def decode_payload(hex_str):

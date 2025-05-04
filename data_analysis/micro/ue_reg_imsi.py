@@ -2,14 +2,21 @@ import json
 import re
 import csv
 import string
+import argparse
 
 # UE Registration
-#   AUSF, UDM
+#   AUSF, PCF
 
-# Paths
-path = "../data/core_ue_reg_100/"
-input_file = "ausf_ue_reg"
-output_csv = "csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--count", "-c", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/core_ue_reg/"
+input_file = f"{args.pattern}_ue_reg{args.count}"
+output_csv = f"csv/{input_file}.csv"
 
 # Regex
 imsi_pattern = re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE)

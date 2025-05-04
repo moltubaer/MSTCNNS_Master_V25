@@ -1,20 +1,35 @@
 import json
 import re
 import csv
+import argparse
 
 # PDU Session Release
 #   SMF
 
-# === Set input/output paths ===
-path = "../data/"
-input_file = "smf_pdu_rel"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
 
-# === Deregistration regex patterns ===
-patterns = [
+# === Input/Output ===
+path = "../data/core_ue_rel/"
+input_file = f"{args.pattern}_pdu_rel{args.count}"
+output_csv = f"csv/{input_file}.csv"
+
+# === Pattern Definitions ===
+pattern_smf = [
     re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
     re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}')
 ]
+
+# === Select Pattern Set ===
+if args.pattern == "smf":
+    patterns = pattern_smf
+# elif args.pattern == "udm":
+#     patterns = pattern_ausf
+else:
+    raise ValueError(f"Unknown pattern set: {args.pattern}")
 
 # === Helper: decode hex TCP payload ===
 def decode_payload(hex_str):

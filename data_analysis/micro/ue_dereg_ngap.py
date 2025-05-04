@@ -2,14 +2,20 @@ import csv
 import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+import argparse
 
 # UE Deregistration
 #   AMF
 
-# === Paths ===
-path = "../data/"
-input_file = "amf_ue_dereg"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/core_ue_dereg"
+input_file = f"amf_ue_dereg{args.count}"
+output_csv = f"csv/{input_file}.csv"
 
 # === Constants ===
 FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport

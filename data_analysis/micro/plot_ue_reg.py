@@ -63,12 +63,41 @@ def plot_stacked_nf_bars(nf_data, output_path):
     plt.savefig(output_path)
     print(f"Plot saved to: {output_path}")
 
+def write_data_csv(nf_data, csv_output_path):
+    ue_counts = sorted(set(k[0] for k in nf_data))
+    nf_names = sorted(set(k[1] for k in nf_data))
+
+    rows = []
+    for ue_count in ue_counts:
+        row = {"UE Count": ue_count}
+        total = 0
+
+        # Calculate total processing time
+        for nf in nf_names:
+            value = nf_data.get((ue_count, nf), 0)
+            row[nf] = value
+            total += value
+
+        row["Total"] = total
+
+        # Add percentage per NF
+        for nf in nf_names:
+            pct = (row[nf] / total * 100) if total > 0 else 0
+            row[f"{nf} %"] = round(pct, 2)
+
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+    df.to_csv(csv_output_path, index=False)
+    print(f"Data written to CSV: {csv_output_path}")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot NF processing time grouped by UE count.")
     parser.add_argument("--input-dir", default="./parsed_csv", help="Directory containing parsed CSV files from NFs.")
     parser.add_argument("--output", default="nf_vs_total_duration.png", help="Path to save the output plot.")
+    parser.add_argument("--csv-output", default="nf_processing_data.csv", help="Path to save the output CSV.")
     args = parser.parse_args()
 
     data = collect_nf_data_by_ue_count(args.input_dir)
     plot_stacked_nf_bars(data, args.output)
-
+    write_data_csv(data, args.csv_output)

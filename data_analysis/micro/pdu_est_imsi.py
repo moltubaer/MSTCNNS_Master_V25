@@ -2,14 +2,21 @@
 import json
 import re
 import csv
+import argparse
 
 # PDU Session Establishment
 #   UDM
 
-# Set paths
-path = "../data/"
-input_file = "udm_pdu_est"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/core_pdu_est/"
+input_file = f"{args.pattern}_pdu_est{args.count}"
+output_csv = f"csv/{input_file}.csv"
 
 # Regex to match IMSI and SUCI
 imsi_pattern = re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE)

@@ -2,18 +2,24 @@ import csv
 import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+import argparse
 
-# UE Registration
+# PDU Session Establishment
 #   AMF
 
-# === Paths ===
-path = "../data/core_ue_reg_100/"
-input_file = "amf_ue_reg"
-output_csv = "./csv/" + input_file + ".csv"
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/core_pdu_est/"
+input_file = f"amf_pdu_est{args.count}"
+output_csv = f"csv/{input_file}.csv"
 
 # === Constants ===
-FIRST_PROCEDURE_CODE = "15"  # InitialUEMEssage
-RELEASE_PROCEDURE_CODE = "14"  # InitialContextSetup
+FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport
+RELEASE_PROCEDURE_CODE = "29"  # PDU Session Resource Setup Request
 
 # === Parse PDML ===
 tree = ET.parse(path + input_file + ".pdml")
