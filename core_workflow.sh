@@ -105,10 +105,21 @@ wait_for_process "$PID1" "$CORE_CONNECTION"
 wait_for_process "$PID2" "$UERANSIM_CONNECTION"
 
 # Securely copy captured files to the local machine
-echo "[*] Copying captured files to the local machine..."
-scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1
-scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1
-echo "[✓] Captured files copied successfully."
+echo "[*] Copying captured files from the Aether core machine to the local machine..."
+if scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1; then
+  echo "[✓] Captured files from the Aether core machine copied successfully."
+else
+  echo "❌ Failed to copy captured files from the Aether core machine. Check your connection or file paths."
+  exit 1
+fi
+
+echo "[*] Copying captured files from the UERANSIM machine to the local machine..."
+if scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1; then
+  echo "[✓] Captured files from the UERANSIM machine copied successfully."
+else
+  echo "❌ Failed to copy captured files from the UERANSIM machine. Check your connection or file paths."
+  exit 1
+fi
 
 # Start analysis workflow
 echo "[*] Starting analysis workflow on captured files..."
