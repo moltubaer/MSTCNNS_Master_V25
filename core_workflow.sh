@@ -50,10 +50,15 @@ run_remote_script() {
   local script="$3"
   local duration="$4"
 
-  echo "[*] Running capture-script on $host for $duration seconds..." >&2
-  ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1 &
-  local pid=$!  # Capture the PID of the background process
-  echo "$pid"  # Return the PID to the caller
+  echo "[*] Running capture-script on $host for $duration seconds in the background..." >&2
+  ssh -tt -i "$key_file" "$host" "source ~/.profile && nohup bash $script $duration > /tmp/capture.log 2>&1 &"
+  local exit_code=$?  # Capture the exit code of the SSH command
+  if [[ $exit_code -ne 0 ]]; then
+    echo "❌ Script on $host failed to start. Check the log file: /tmp/capture.log on $host."
+    exit 1
+  else
+    echo "[✓] Script on $host started successfully in the background. Check the log file: /tmp/capture.log on $host."
+  fi
 }
 
 # Function to run the UERANSIM `run_ues.py` script
@@ -81,6 +86,7 @@ wait_for_process() {
   local pid="$1"
   local host="$2"
 
+  # Wait for the SSH process to complete
   if ! wait "$pid"; then
     echo "❌ Script on $host failed. Check the log file: /tmp/${host}_output.log"
     exit 1
@@ -89,20 +95,23 @@ wait_for_process() {
   fi
 }
 
-# Start capture scripts on both remote machines
-PID1=$(run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$DURATION")
-PID2=$(run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION")
+# Start capture script on the Aether core machine
+echo "[*] Starting capture script on the Aether core machine..."
+run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$DURATION"
+
+# Start capture script on the UERANSIM machine
+echo "[*] Starting capture script on the UERANSIM machine..."
+run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION"
 
 # Wait for 5 seconds to ensure capture starts
 echo "[*] Waiting for 5 seconds to ensure capture starts..."
 sleep 5
 
 # Run the UERANSIM `run_ues.py` script
-run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$RUN_UES_SCRIPT" 100 0.01 "exponential"
+run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_RUN_UES_SCRIPT" 100 0.01 "exponential"
 
-# Wait for both capture processes to complete
-wait_for_process "$PID1" "$CORE_CONNECTION"
-wait_for_process "$PID2" "$UERANSIM_CONNECTION"
+# No need to wait for processes; rely on logs for verification
+echo "[*] Capture scripts are running in the background. Proceeding to the next steps..."
 
 # Securely copy captured files to the local machine
 echo "[*] Copying captured files from the Aether core machine to the local machine..."
@@ -133,3 +142,5 @@ ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
 echo "[✓] Cleanup completed."
 
 echo "[✓] Workflow completed successfully."
+
+ssh -tt -i ~/.ssh/core2.key ubuntu@10.100.51.81 "bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/aether_capture.sh 30"
