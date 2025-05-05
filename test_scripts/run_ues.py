@@ -20,16 +20,9 @@ launched_processes = []
 
 def run_ues(count, mean_delay):
     if args.mode == "exponential":
-        delays = np.random.exponential(scale=mean_delay, size=count-1)
+        delays = np.random.exponential(scale=mean_delay, size=count - 1)
     elif args.mode == "linear":
         delays = [mean_delay] * (count - 1)
-
-    # plt.hist(delays, bins=20, density=True, alpha=0.7, color='blue')
-    # plt.title(f"Exponential Distribution (mean = {mean_delay})")
-    # plt.xlabel("Delay (seconds)")
-    # plt.ylabel("Density")
-    # plt.grid(True)
-    # plt.show()
 
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
@@ -47,11 +40,24 @@ def run_ues(count, mean_delay):
 
     # Signal the Aether core server that the UEs are done
     print(f"✅ All UEs launched. Signaling Aether core server...")
-    subprocess.run(
-        ["ssh", "-i", AETHER_KEY, AETHER_HOST, f"touch {SIGNAL_FILE}"],
-        check=True,
-    )
-    print(f"✅ Signal file created on Aether core server: {SIGNAL_FILE}")
+    try:
+        subprocess.run(
+            ["ssh", "-i", AETHER_KEY, AETHER_HOST, f"touch {SIGNAL_FILE}"],
+            check=True,
+        )
+        print(f"✅ Signal file created on Aether core server: {SIGNAL_FILE}")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create signal file on Aether core server: {e}")
+        return
+
+    # Keep UEs running
+    print("✅ All UEs launched and signal sent. Keeping UEs running...")
+    try:
+        while True:
+            time.sleep(10)  # Keep the script alive
+    except KeyboardInterrupt:
+        print("🛑 Terminating UEs...")
+        kill_ues()
 
 def kill_ues():
     if not os.path.exists(PID_FILE):
