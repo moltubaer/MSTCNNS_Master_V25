@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 UE_CONFIG_DIR = "/home/ubuntu/UERANSIM/config/tests"
 UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"
 PID_FILE = "ue-pids.txt"
+SIGNAL_FILE = "/home/ubuntu/done_signal.txt"  # Path to the signal file on the Aether core server
+AETHER_HOST = "ubuntu@10.100.51.81"  # Aether core server SSH connection
+AETHER_KEY = "~/.ssh/aether_core.key"  # Path to the SSH private key for the Aether core server
 
 default_delay = 0.01    # 10 ms
 launched_processes = []
@@ -41,6 +44,14 @@ def run_ues(count, mean_delay):
 
             if i < count:
                 time.sleep(delays[i - 1])
+
+    # Signal the Aether core server that the UEs are done
+    print(f"✅ All UEs launched. Signaling Aether core server...")
+    subprocess.run(
+        ["ssh", "-i", AETHER_KEY, AETHER_HOST, f"touch {SIGNAL_FILE}"],
+        check=True,
+    )
+    print(f"✅ Signal file created on Aether core server: {SIGNAL_FILE}")
 
 def kill_ues():
     if not os.path.exists(PID_FILE):

@@ -6,6 +6,7 @@
 
 # Absolute path to Aether Onramp
 AETHER_PATH="/home/ubuntu/aether-onramp"
+SIGNAL_FILE="/home/ubuntu/done_signal.txt"  # Path to the signal file
 
 # Step 1: Ensure kubectl is installed
 if ! command -v kubectl &> /dev/null; then
@@ -114,6 +115,31 @@ for pod in "${matched_pods[@]}"; do
 
     echo "[DEBUG] kubectl sniff for pod: $pod started in the background (PID: ${pod_pids[-1]})."
 done
+
+# ===
+# WAIT FOR SIGNAL FILE
+# ===
+
+echo "[*] Waiting for signal file: $SIGNAL_FILE"
+
+while [ ! -f "$SIGNAL_FILE" ]; do
+    sleep 5  # Check every 5 seconds
+done
+
+echo "[*] Signal file detected. Stopping capture processes."
+
+# Stop all capture processes
+for pid in "${pod_pids[@]}"; do
+    kill "$pid" 2>/dev/null
+done
+
+kill "$host_pid" 2>/dev/null
+
+echo "[✓] All capture processes stopped."
+
+# Clean up the signal file
+rm -f "$SIGNAL_FILE"
+echo "[*] Signal file removed."
 
 # ===
 # WAITING FOR ALL CAPTURES
