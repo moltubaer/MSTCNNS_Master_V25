@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Usage: ./remote_runner.sh -e [aether|open5gs|free5gc] --duration [seconds] 
-# todo: include also what test to run
+# Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds]
 
 # ------ DEFINED IN CONFIG ------
 # ENV - for echo information purposes
@@ -10,11 +9,12 @@
 # CORE_KEY - path to core private key file
 # UERANSIM_KEY - path to ueransim private key file
 # CORE_CAPTURE_SCRIPT - path to script for capture on different core network functions
-# UERANSIM_CAPTURE_SCRIPT - path to script for capture traffic on ueransim 
-
+# UERANSIM_CAPTURE_SCRIPT - path to script for capture traffic on ueransim
+# RUN_UES_SCRIPT - path to the run_ues.py script on the UERANSIM machine
 
 CONFIG_DIR="./cores"
 CONFIG_FILE=""
+DURATION=120  # Default duration
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -50,24 +50,31 @@ run_remote_script() {
   local script="$3"
   local duration="$4"
 
-  echo "[*] Running capture-script on $host for $duration seconds..." >&2  # Redirect debug message to stderr
-
-  # Add `source ~/.profile` for core2
-  if [[ "$host" == "$CORE_CONNECTION" ]]; then
-    ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1
-  else
-    ssh -tt -i "$key_file" "$host" "bash $script $duration" > /tmp/${host}_output.log 2>&1
-  fi
-
-  local exit_code=$?  # Capture the exit code of the SSH command
-  echo "$exit_code"  # Return the exit code to the caller
+  echo "[*] Running capture-script on $host for $duration seconds..." >&2
+  ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration" > /tmp/${host}_output.log 2>&1 &
+  local pid=$!  # Capture the PID of the background process
+  echo "$pid"  # Return the PID to the caller
 }
 
-# Run scripts on both remote machines in the background
-run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$DURATION" &
-PID1=$!
-run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION" &
-PID2=$!
+# Function to run the UERANSIM `run_ues.py` script
+run_ues_script() {
+  local key_file="$1"
+  local host="$2"
+  local script="$3"
+  local count="$4"
+  local mean_delay="$5"
+  local mode="$6"
+
+  echo "[*] Starting UERANSIM run_ues.py script on $host..." >&2
+  ssh -tt -i "$key_file" "$host" "python3 $script --count $count --core aether --mode $mode --mean-delay $mean_delay" > /tmp/${host}_ues_output.log 2>&1
+  local exit_code=$?
+  if [[ $exit_code -ne 0 ]]; then
+    echo "❌ UERANSIM run_ues.py script failed on $host. Check the log file: /tmp/${host}_ues_output.log"
+    exit 1
+  else
+    echo "[✓] UERANSIM run_ues.py script completed successfully on $host. Check the log file: /tmp/${host}_ues_output.log"
+  fi
+}
 
 # Function to wait for a process and handle errors
 wait_for_process() {
@@ -82,22 +89,36 @@ wait_for_process() {
   fi
 }
 
-# Wait for both processes
+# Start capture scripts on both remote machines
+PID1=$(run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$DURATION")
+PID2=$(run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION")
+
+# Wait for 5 seconds to ensure capture starts
+echo "[*] Waiting for 5 seconds to ensure capture starts..."
+sleep 5
+
+# Run the UERANSIM `run_ues.py` script
+run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$RUN_UES_SCRIPT" 100 0.01 "exponential"
+
+# Wait for both capture processes to complete
 wait_for_process "$PID1" "$CORE_CONNECTION"
 wait_for_process "$PID2" "$UERANSIM_CONNECTION"
 
-# todo: Decide what control plane test to run on ueransim machine
-# ? UE-register, UE-PDU-session-establishment, UE-deregister
+# Securely copy captured files to the local machine
+echo "[*] Copying captured files to the local machine..."
+scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1
+scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1
+echo "[✓] Captured files copied successfully."
 
-# todo: Write those captured files to a nice and descriptive file.
+# Start analysis workflow
+echo "[*] Starting analysis workflow on captured files..."
+python3 analyze_captures.py --input ./captures/ --output ./analysis_results/
+echo "[✓] Analysis workflow completed successfully."
 
-# todo: securecopy all those files from remote to locally
+# Cleanup remote processes
+echo "[*] Cleaning up remote processes..."
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
+echo "[✓] Cleanup completed."
 
-# todo: start a analysis workflow on those files
-
-# todo: cleanup (pkill nr-ue, pkill nr-gnb)
-
-
-
-
-echo "[✓] Both remote capture scripts completed successfully."
+echo "[✓] Workflow completed successfully."
