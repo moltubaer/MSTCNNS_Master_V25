@@ -1,10 +1,20 @@
 #!/bin/bash
 
-# Usage: ./remote_runner.sh -e [aether|open5gs|free5gc] --duration [seconds]
+# Usage: ./remote_runner.sh -e [aether|open5gs|free5gc] --duration [seconds] 
+# todo: include also what test to run
+
+# ------ DEFINED IN CONFIG ------
+# ENV - for echo information purposes
+# CORE_CONNECTION - ssh connection to core
+# UERANSIM_CONNECTION - ssh connection to ueransim
+# CORE_KEY - path to core private key file
+# UERANSIM_KEY - path to ueransim private key file
+# CORE_CAPTURE_SCRIPT - path to script for capture on different core network functions
+# UERANSIM_CAPTURE_SCRIPT - path to script for capture traffic on ueransim 
+
 
 CONFIG_DIR="./cores"
 CONFIG_FILE=""
-DURATION=120  # Default duration
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -76,7 +86,7 @@ wait_for_process() {
 wait_for_process "$PID1" "$CORE_CONNECTION"
 wait_for_process "$PID2" "$UERANSIM_CONNECTION"
 
-# todo: Decide what control plane test to run
+# todo: Decide what control plane test to run on ueransim machine
 # ? UE-register, UE-PDU-session-establishment, UE-deregister
 
 # todo: Write those captured files to a nice and descriptive file.

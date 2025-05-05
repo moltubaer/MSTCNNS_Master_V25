@@ -77,7 +77,7 @@ duration=${1:-120} # Default, 120 secods if not provided
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 host_output_dir="/home/ubuntu/pcap_captures/aether-$timestamp"
 host_pcap_path="$host_output_dir/host_capture.pcap"
-mkdir -p "$host_output_dir"
+mkdir -p "$host_output_dir/logs"
 
 # ===
 # HOST OS CAPTURE
@@ -104,11 +104,11 @@ for pod in "${matched_pods[@]}"; do
 
     if [[ "$pod" == "upf-0" ]]; then
         echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     else
         echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     fi
 
