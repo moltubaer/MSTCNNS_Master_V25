@@ -98,6 +98,12 @@ python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py 
 
 # Start tcpdump on the host interface
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/host_tcpdump.log" 2>&1 &
+host_pid=$!  # Capture the PID of the tcpdump process
+
+if [ -z "$host_pid" ]; then
+    echo "[ERROR] Failed to start tcpdump. Exiting."
+    exit 1
+fi
 
 # ===
 # POD CAPTURES
@@ -134,20 +140,24 @@ failed_pids=()
 
 # Wait for all pod capture processes to complete
 for pid in "${pod_pids[@]}"; do
-    if ! wait "$pid"; then
-        exit_code=$?
-        if [ $exit_code -eq 0; then
-            echo "[INFO] Pod capture process (PID: $pid) completed successfully."
-        elif [ $exit_code -eq 124 ]; then
-            echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
-        else
-            echo "[ERROR] A pod capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
-            failed_pids+=("$pid")  # Track the failed PID
-        fi
+    wait "$pid"
+    exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo "[INFO] Pod capture process (PID: $pid) completed successfully."
+    elif [ $exit_code -eq 124 ]; then
+        echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
+    else
+        echo "[ERROR] A pod capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
+        failed_pids+=("$pid")  # Track the failed PID
     fi
 done
 
 # Wait for the host capture process to complete
+if [ -z "$host_pid" ]; then
+    echo "[ERROR] Tcpdump process did not start correctly. Exiting."
+    exit 1
+fi
+
 if ! wait "$host_pid"; then
     exit_code=$?
     if [ $exit_code -eq 0 ]; then
@@ -168,8 +178,8 @@ else
     echo "[INFO] Tcpdump process (PID: $host_pid) is no longer running."
 fi
 
-# Check if any processes failedt
-if [ ${#failed_pids[@]} -gt 0]; then
+# Check if any processes failed
+if [ ${#failed_pids[@]} -gt 0 ]; then
     echo "[ERROR] The following processes failed: ${failed_pids[*]}"
     echo "Please check the corresponding log files for more details."
     exit 1
