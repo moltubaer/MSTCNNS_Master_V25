@@ -1,20 +1,13 @@
 #!/bin/bash
 
-# Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds]
-
-# ------ DEFINED IN CONFIG ------
-# ENV - for echo information purposes
-# CORE_CONNECTION - ssh connection to core
-# UERANSIM_CONNECTION - ssh connection to ueransim
-# CORE_KEY - path to core private key file
-# UERANSIM_KEY - path to ueransim private key file
-# CORE_CAPTURE_SCRIPT - path to script for capture on different core network functions
-# UERANSIM_CAPTURE_SCRIPT - path to script for capture traffic on ueransim
-# UERANSIM_RUN_UES_SCRIPT - path to the run_ues.py script on the UERANSIM machine
+# Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds] --count [number_of_ues] --test [test_script] --mode [linear|exponential]
 
 CONFIG_DIR="./cores"
 CONFIG_FILE=""
 DURATION=120  # Default duration
+UE_COUNT=100  # Default number of UEs
+TEST_SCRIPT="run_ues.py"  # Default test script
+MODE="linear"  # Default mode
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -25,6 +18,18 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --duration)
       DURATION="$2"
+      shift 2
+      ;;
+    --count)
+      UE_COUNT="$2"
+      shift 2
+      ;;
+    --test)
+      TEST_SCRIPT="$2"
+      shift 2
+      ;;
+    --mode)
+      MODE="$2"
       shift 2
       ;;
     *)
@@ -43,82 +48,39 @@ fi
 # Load config
 source "$CONFIG_FILE"
 
+# Validate the test script
+if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_session.py" && "$TEST_SCRIPT" != "ue_dereg.py" ]]; then
+  echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_session.py, ue_dereg.py."
+  exit 1
+fi
+
+# Validate the mode
+if [[ "$MODE" != "linear" && "$MODE" != "exponential" ]]; then
+  echo "❌ Invalid mode: $MODE. Valid options are: linear, exponential."
+  exit 1
+fi
+
 # Calculate the duration for aether_capture.sh
-UE_COUNT=100  # Number of UEs
 MEAN_DELAY=0.01  # Mean delay between UE registrations (in seconds)
 BUFFER_TIME=30  # Additional buffer time (in seconds)
 
-# Total duration = (UE_COUNT * MEAN_DELAY) + BUFFER_TIME
+# Total duration = (UE_COUNT * $MEAN_DELAY + $BUFFER_TIME)
 CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
 CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
 echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
 
-# Function to run a remote script and handle errors
-run_remote_script() {
-  local key_file="$1"
-  local host="$2"
-  local script="$3"
-  local duration="$4"
-
-  echo "[*] Running capture-script on $host for $duration seconds..." >&2
-  ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration > /tmp/capture.log 2>&1" &
-  local ssh_pid=$!  # Capture the PID of the SSH command
-
-  # Wait for the SSH process to complete
-  if wait "$ssh_pid"; then
-    echo "[✓] Capture script on $host completed successfully. Check the log file: /tmp/capture.log on $host."
-  else
-    echo "❌ Capture script on $host failed. Check the log file: /tmp/capture.log on $host."
-    exit 1
-  fi
-}
-
-# Function to run the UERANSIM `run_ues.py` script
-run_ues_script() {
-  local key_file="$1"
-  local host="$2"
-  local script="$3"
-  local count="$4"
-  local mean_delay="$5"
-  local mode="$6"
-
-  echo "[*] Starting UERANSIM run_ues.py script on $host..." >&2
-  ssh -tt -i "$key_file" "$host" "python3 $script --count $count --core aether --mode $mode --mean-delay $mean_delay" > /tmp/${host}_ues_output.log 2>&1 &
-  local exit_code=$?
-  if [[ $exit_code -ne 0 ]]; then
-    echo "❌ UERANSIM run_ues.py script failed on $host. Check the log file: /tmp/${host}_ues_output.log"
-    exit 1
-  else
-    echo "[✓] UERANSIM run_ues.py script completed successfully on $host. Check the log file: /tmp/${host}_ues_output.log"
-  fi
-}
-
-# Function to wait for a process and handle errors
-wait_for_process() {
-  local pid="$1"
-  local host="$2"
-
-  # Wait for the SSH process to complete
-  if ! wait "$pid"; then
-    echo "❌ Script on $host failed. Check the log file: /tmp/${host}_output.log"
-    exit 1
-  else
-    echo "[✓] Script on $host completed successfully. Check the log file: /tmp/${host}_output.log"
-  fi
-}
-
 # Start capture script on the Aether core machine
 echo "[*] Starting capture script on the Aether core machine for $CAPTURE_DURATION seconds..."
-ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT $CAPTURE_DURATION > /tmp/capture.log 2>&1" &
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT > /tmp/capture.log 2>&1" &
 capture_pid=$!  # Capture the PID of the capture process
 
 # Wait for a short delay to ensure the capture script starts
 echo "[*] Waiting for 5 seconds to ensure capture starts..."
 sleep 5
 
-# Start the UERANSIM `run_ues.py` script
-echo "[*] Starting UERANSIM run_ues.py script on the UERANSIM machine..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 $UERANSIM_RUN_UES_SCRIPT --count 100 --core aether --mode linear --mean-delay 0.01 --duration $CAPTURE_DURATION > /tmp/ues_output.log 2>&1" &
+# Start the selected test script on the UERANSIM machine
+echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core aether --mode $MODE --mean-delay 0.01 --duration $DURATION > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
 # Wait for both processes to complete
@@ -127,31 +89,7 @@ wait "$capture_pid"
 echo "[✓] Capture script on the Aether core machine completed."
 
 wait "$ues_pid"
-echo "[✓] UERANSIM run_ues.py script completed."
-
-# Securely copy captured files to the local machine
-# ! commented out for now
-# echo "[*] Copying captured files from the Aether core machine to the local machine..."
-# if scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1; then
-#   echo "[✓] Captured files from the Aether core machine copied successfully."
-# else
-#   echo "❌ Failed to copy captured files from the Aether core machine. Check your connection or file paths."
-#   exit 1
-# fi
-
-# echo "[*] Copying captured files from the UERANSIM machine to the local machine..."
-# if scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1; then
-#   echo "[✓] Captured files from the UERANSIM machine copied successfully."
-# else
-#   echo "❌ Failed to copy captured files from the UERANSIM machine. Check your connection or file paths."
-#   exit 1
-# fi
-
-# Start analysis workflow
-# ! commented out for now
-# echo "[*] Starting analysis workflow on captured files..."
-# python3 analyze_captures.py --input ./captures/ --output ./analysis_results/
-# echo "[✓] Analysis workflow completed successfully."
+echo "[✓] $TEST_SCRIPT script completed on the UERANSIM machine."
 
 # Cleanup remote processes
 echo "[*] Cleaning up remote processes..."

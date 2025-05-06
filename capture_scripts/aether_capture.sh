@@ -1,6 +1,41 @@
 #!/bin/bash
 
 # ===
+# Argument Parsing
+# ===
+
+# Default values
+duration=120
+ue_count=100  # Default UE count
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --duration)
+            duration="$2"
+            shift 2
+            ;;
+        --ue-count)
+            ue_count="$2"
+            shift 2
+            ;;
+        *)
+            echo "❌ Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate UE count
+if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
+    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    exit 1
+fi
+
+echo "[*] Capture duration set to $duration seconds."
+echo "[*] UE count set to $ue_count."
+
+# ===
 # find right names of aether pods (NF's)
 # ===
 
@@ -67,26 +102,13 @@ fi
 # GET READY
 # ===
 
-# Interface for pod, any to caputure all
+# Interface for pod, any to capture all
 pod_interface="any"
-
 host_interface="any"
 
-duration=${1:-120} # Default, 120 secods if not provided
-
-# Calculate the duration for aether_capture.sh
-UE_COUNT=100  # Number of UEs
-MEAN_DELAY=0.01  # Mean delay between UE registrations (in seconds)
-BUFFER_TIME=30  # Additional buffer time (in seconds)
-
-# Total duration = (UE_COUNT * MEAN_DELAY) + BUFFER_TIME
-CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
-CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
-echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
-
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
-host_output_dir="/home/ubuntu/pcap_captures/aether-$timestamp"
-host_pcap_path="$host_output_dir/host_capture.pcap"
+host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-aether-$timestamp"
+host_pcap_path="$host_output_dir/${ue_count}_host_capture.pcap"
 mkdir -p "$host_output_dir/logs"
 
 # ===
@@ -118,11 +140,11 @@ for pod in "${matched_pods[@]}"; do
 
     if [[ "$pod" == "upf-0" ]]; then
         echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${ue_count}_${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     else
         echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${ue_count}_${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     fi
 
@@ -153,11 +175,6 @@ for pid in "${pod_pids[@]}"; do
 done
 
 # Wait for the host capture process to complete
-if [ -z "$host_pid" ]; then
-    echo "[ERROR] Tcpdump process did not start correctly. Exiting."
-    exit 1
-fi
-
 if ! wait "$host_pid"; then
     exit_code=$?
     if [ $exit_code -eq 0 ]; then

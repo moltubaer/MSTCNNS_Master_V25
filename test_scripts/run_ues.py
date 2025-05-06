@@ -10,17 +10,16 @@ UE_BINARY = "/home/ubuntu/UERANSIM/build/nr-ue"
 PID_FILE = "ue-pids.txt"
 
 default_delay = 0.01  # 10 ms
-launched_processes = []
 
-def run_ues(count, mean_delay, duration):
-    if args.mode == "exponential":
+def run_ues(count, mean_delay, duration, mode, core):
+    if mode == "exponential":
         delays = np.random.exponential(scale=mean_delay, size=count - 1)
-    elif args.mode == "linear":
+    elif mode == "linear":
         delays = [mean_delay] * (count - 1)
 
     with open(PID_FILE, "w") as pid_file:
         for i in range(1, count + 1):
-            config_file = os.path.join(UE_CONFIG_DIR, f"{args.core}-ue-{i}.yaml")
+            config_file = os.path.join(UE_CONFIG_DIR, f"{core}-ue-{i}.yaml")
             if not os.path.exists(config_file):
                 print(f"⚠️ Config file not found: {config_file}")
                 continue
@@ -61,14 +60,14 @@ def kill_ues():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
     parser.add_argument("--count", "-c", type=int, help="Number of UEs to run")
-    parser.add_argument("--kill", "-k", action="store_true", help="Kill UEs started from PID file")
     parser.add_argument("--mean-delay", "-md", type=float, default=default_delay, help="Average delay between UE starts (seconds)")
-    parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
-    parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Type of delay buffer between UE PDU session starts")
+    parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Core network type")
+    parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Delay mode between UE starts")
     parser.add_argument("--duration", "-d", type=int, default=120, help="Duration to keep UEs running (seconds)")
+    parser.add_argument("--kill", "-k", action="store_true", help="Kill UEs started from PID file")
     args = parser.parse_args()
 
     if args.kill:
         kill_ues()
     elif args.count:
-        run_ues(args.count, args.mean_delay, args.duration)
+        run_ues(args.count, args.mean_delay, args.duration, args.mode, args.core)
