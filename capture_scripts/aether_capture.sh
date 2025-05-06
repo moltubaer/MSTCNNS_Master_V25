@@ -136,7 +136,7 @@ failed_pids=()
 for pid in "${pod_pids[@]}"; do
     if ! wait "$pid"; then
         exit_code=$?
-        if [ $exit_code -eq 0 ]; then
+        if [ $exit_code -eq 0; then
             echo "[INFO] Pod capture process (PID: $pid) completed successfully."
         elif [ $exit_code -eq 124 ]; then
             echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
@@ -160,8 +160,16 @@ if ! wait "$host_pid"; then
     fi
 fi
 
-# Check if any processes failed
-if [ ${#failed_pids[@]} -gt 0 ]; then
+# Ensure the tcpdump process is killed if still running
+if ps -p "$host_pid" > /dev/null 2>&1; then
+    echo "[INFO] Killing tcpdump process (PID: $host_pid) as it is still running."
+    sudo kill -9 "$host_pid" 2>/dev/null || echo "[WARNING] Failed to kill tcpdump process (PID: $host_pid)."
+else
+    echo "[INFO] Tcpdump process (PID: $host_pid) is no longer running."
+fi
+
+# Check if any processes failedt
+if [ ${#failed_pids[@]} -gt 0]; then
     echo "[ERROR] The following processes failed: ${failed_pids[*]}"
     echo "Please check the corresponding log files for more details."
     exit 1
