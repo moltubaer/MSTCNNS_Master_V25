@@ -51,7 +51,7 @@ run_remote_script() {
   local duration="$4"
 
   echo "[*] Running capture-script on $host for $duration seconds in the background..." >&2
-  ssh -tt -i "$key_file" "$host" "source ~/.profile && nohup bash $script $duration > /tmp/capture.log 2>&1 &"
+  ssh -tt -i "$key_file" "$host" "source ~/.profile && nohup bash $script $duration" > /tmp/${host}_ouput.log 2>&1
   local exit_code=$?  # Capture the exit code of the SSH command
   if [[ $exit_code -ne 0 ]]; then
     echo "❌ Script on $host failed to start. Check the log file: /tmp/capture.log on $host."
@@ -142,5 +142,3 @@ ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
 echo "[✓] Cleanup completed."
 
 echo "[✓] Workflow completed successfully."
-
-ssh -tt -i ~/.ssh/core2.key ubuntu@10.100.51.81 "bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/aether_capture.sh 30"
