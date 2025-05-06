@@ -8,7 +8,7 @@ containers=("free5gc_amf" "free5gc_smf" "free5gc_upf" "free5gc_udm" "free5gc_aus
 for container in "${containers[@]}"; do
     echo "Installing tcpdump in container: $container"
 
-    if [ "$container" = "free5gc-upf" ]; then
+    if [ "$container" = "free5gc_upf" ]; then
         # Use apt for UPF container
         docker exec "$container" sh -c "apt update && apt install -y tcpdump"
     else
