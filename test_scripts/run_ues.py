@@ -57,6 +57,7 @@ def kill_ues():
     os.remove(PID_FILE)
     print("✅ All UEs terminated and PID file cleaned up.")
 
+# todo: new arg stable
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
     parser.add_argument("--count", "-c", type=int, help="Number of UEs to run")

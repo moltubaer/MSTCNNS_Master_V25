@@ -98,3 +98,6 @@ ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
 echo "[✓] Cleanup completed."
 
 echo "[✓] Workflow completed successfully."
+
+
+# todo: cleanup of nr-gnb and nr-ue after capture on aether sd-core has finsihed
