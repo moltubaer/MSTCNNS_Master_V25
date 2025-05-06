@@ -107,24 +107,21 @@ echo "[*] Starting tcpdump in pods..."
 
 pod_pids=()  # Array to store process IDs of pod captures
 
-# Start kubectl sniff for each pod
 for pod in "${matched_pods[@]}"; do
-    timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
+    echo "  [+] $pod capturing on interface '$pod_interface' for $duration seconds"
+
+    if [[ "$pod" == "upf-0" ]]; then
+        echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
+        pod_pids+=($!)  # Store the process ID of the kubectl sniff command
+    else
+        echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
+        pod_pids+=($!)  # Store the process ID of the kubectl sniff command
+    fi
+
+    echo "[DEBUG] kubectl sniff for pod: $pod started in the background (PID: ${pod_pids[-1]})."
 done
-
-# Start capture script on the Aether core machine
-echo "[*] Starting capture processes locally for $CAPTURE_DURATION seconds..."
-
-echo "[*] Signal file detected. Stopping capture processes."
-
-# Stop all capture processes
-for pid in "${pod_pids[@]}"; do
-    kill "$pid" 2>/dev/null
-done
-
-kill "$host_pid" 2>/dev/null
-
-echo "[✓] All capture processes stopped."
 
 # ===
 # WAITING FOR ALL CAPTURES
