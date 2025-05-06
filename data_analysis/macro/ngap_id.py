@@ -2,11 +2,22 @@ import csv
 import os
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+import argparse
+
+# === CLI Argument ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+args = parser.parse_args()
+
+# === Input/Output ===
+path = "../data/open5gs/ue_reg/ueransim/"
+input_file = f"{args.count}.ue_reg"
+output_csv = f"csv/{input_file}.csv"
 
 # === Paths ===
-path = "../data/ueransim_full/"
-input_file = "500.ue_reg"
-output_csv = "./csv/" + input_file + ".csv"
+# path = "../data/open5gs/ue_reg/ueransim/"
+# input_file = "500.ue_reg"
+# output_csv = "./csv/" + input_file + ".csv"
 
 # === Procedure Code Pairs (Initiating -> Release) ===
 PROCEDURE_CODE_PAIRS = [
