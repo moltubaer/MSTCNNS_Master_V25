@@ -43,6 +43,16 @@ fi
 # Load config
 source "$CONFIG_FILE"
 
+# Calculate the duration for aether_capture.sh
+UE_COUNT=100  # Number of UEs
+MEAN_DELAY=0.01  # Mean delay between UE registrations (in seconds)
+BUFFER_TIME=30  # Additional buffer time (in seconds)
+
+# Total duration = (UE_COUNT * MEAN_DELAY) + BUFFER_TIME
+CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
+CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
+echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
+
 # Function to run a remote script and handle errors
 run_remote_script() {
   local key_file="$1"
@@ -50,14 +60,16 @@ run_remote_script() {
   local script="$3"
   local duration="$4"
 
-  echo "[*] Running capture-script on $host for $duration seconds in the background..." >&2
-  ssh -tt -i "$key_file" "$host" "source ~/.profile && nohup bash $script $duration" > /tmp/${host}_ouput.log 2>&1
-  local exit_code=$?  # Capture the exit code of the SSH command
-  if [[ $exit_code -ne 0 ]]; then
-    echo "❌ Script on $host failed to start. Check the log file: /tmp/capture.log on $host."
-    exit 1
+  echo "[*] Running capture-script on $host for $duration seconds..." >&2
+  ssh -tt -i "$key_file" "$host" "source ~/.profile && bash $script $duration > /tmp/capture.log 2>&1" &
+  local ssh_pid=$!  # Capture the PID of the SSH command
+
+  # Wait for the SSH process to complete
+  if wait "$ssh_pid"; then
+    echo "[✓] Capture script on $host completed successfully. Check the log file: /tmp/capture.log on $host."
   else
-    echo "[✓] Script on $host started successfully in the background. Check the log file: /tmp/capture.log on $host."
+    echo "❌ Capture script on $host failed. Check the log file: /tmp/capture.log on $host."
+    exit 1
   fi
 }
 
@@ -71,7 +83,7 @@ run_ues_script() {
   local mode="$6"
 
   echo "[*] Starting UERANSIM run_ues.py script on $host..." >&2
-  ssh -tt -i "$key_file" "$host" "python3 $script --count $count --core aether --mode $mode --mean-delay $mean_delay" > /tmp/${host}_ues_output.log 2>&1
+  ssh -tt -i "$key_file" "$host" "python3 $script --count $count --core aether --mode $mode --mean-delay $mean_delay" > /tmp/${host}_ues_output.log 2>&1 &
   local exit_code=$?
   if [[ $exit_code -ne 0 ]]; then
     echo "❌ UERANSIM run_ues.py script failed on $host. Check the log file: /tmp/${host}_ues_output.log"
@@ -96,11 +108,11 @@ wait_for_process() {
 }
 
 # Start capture script on the Aether core machine
-echo "[*] Starting capture script on the Aether core machine..."
-run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$DURATION"
+echo "[*] Starting capture script on the Aether core machine for $CAPTURE_DURATION seconds..."
+run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$CAPTURE_DURATION"
 
 # Start capture script on the UERANSIM machine
-echo "[*] Starting capture script on the UERANSIM machine..."
+echo "[*] Starting capture script on the UERANSIM machine for $DURATION seconds..."
 run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION"
 
 # Wait for 5 seconds to ensure capture starts
@@ -108,7 +120,7 @@ echo "[*] Waiting for 5 seconds to ensure capture starts..."
 sleep 5
 
 # Run the UERANSIM `run_ues.py` script
-run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_RUN_UES_SCRIPT" 100 0.01 "exponential"
+run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_RUN_UES_SCRIPT" 100 0.01 "linear"
 
 # No need to wait for processes; rely on logs for verification
 echo "[*] Capture scripts are running in the background. Proceeding to the next steps..."
