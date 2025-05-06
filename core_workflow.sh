@@ -10,7 +10,7 @@
 # UERANSIM_KEY - path to ueransim private key file
 # CORE_CAPTURE_SCRIPT - path to script for capture on different core network functions
 # UERANSIM_CAPTURE_SCRIPT - path to script for capture traffic on ueransim
-# RUN_UES_SCRIPT - path to the run_ues.py script on the UERANSIM machine
+# UERANSIM_RUN_UES_SCRIPT - path to the run_ues.py script on the UERANSIM machine
 
 CONFIG_DIR="./cores"
 CONFIG_FILE=""
@@ -109,43 +109,49 @@ wait_for_process() {
 
 # Start capture script on the Aether core machine
 echo "[*] Starting capture script on the Aether core machine for $CAPTURE_DURATION seconds..."
-run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$CAPTURE_DURATION"
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT $CAPTURE_DURATION > /tmp/capture.log 2>&1" &
+capture_pid=$!  # Capture the PID of the capture process
 
-# Start capture script on the UERANSIM machine
-echo "[*] Starting capture script on the UERANSIM machine for $DURATION seconds..."
-run_remote_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_CAPTURE_SCRIPT" "$DURATION"
-
-# Wait for 5 seconds to ensure capture starts
+# Wait for a short delay to ensure the capture script starts
 echo "[*] Waiting for 5 seconds to ensure capture starts..."
 sleep 5
 
-# Run the UERANSIM `run_ues.py` script
-run_ues_script "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "$UERANSIM_RUN_UES_SCRIPT" 100 0.01 "linear"
+# Start the UERANSIM `run_ues.py` script
+echo "[*] Starting UERANSIM run_ues.py script on the UERANSIM machine..."
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 $UERANSIM_RUN_UES_SCRIPT --count 100 --core aether --mode linear --mean-delay 0.01 --duration $CAPTURE_DURATION > /tmp/ues_output.log 2>&1" &
+ues_pid=$!  # Capture the PID of the UERANSIM process
 
-# No need to wait for processes; rely on logs for verification
-echo "[*] Capture scripts are running in the background. Proceeding to the next steps..."
+# Wait for both processes to complete
+echo "[*] Waiting for both capture and UERANSIM processes to complete..."
+wait "$capture_pid"
+echo "[✓] Capture script on the Aether core machine completed."
+
+wait "$ues_pid"
+echo "[✓] UERANSIM run_ues.py script completed."
 
 # Securely copy captured files to the local machine
-echo "[*] Copying captured files from the Aether core machine to the local machine..."
-if scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1; then
-  echo "[✓] Captured files from the Aether core machine copied successfully."
-else
-  echo "❌ Failed to copy captured files from the Aether core machine. Check your connection or file paths."
-  exit 1
-fi
+# ! commented out for now
+# echo "[*] Copying captured files from the Aether core machine to the local machine..."
+# if scp -i "$CORE_KEY" "$CORE_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/core/ > /dev/null 2>&1; then
+#   echo "[✓] Captured files from the Aether core machine copied successfully."
+# else
+#   echo "❌ Failed to copy captured files from the Aether core machine. Check your connection or file paths."
+#   exit 1
+# fi
 
-echo "[*] Copying captured files from the UERANSIM machine to the local machine..."
-if scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1; then
-  echo "[✓] Captured files from the UERANSIM machine copied successfully."
-else
-  echo "❌ Failed to copy captured files from the UERANSIM machine. Check your connection or file paths."
-  exit 1
-fi
+# echo "[*] Copying captured files from the UERANSIM machine to the local machine..."
+# if scp -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION:/home/ubuntu/pcap_captures/*" ./captures/ueransim/ > /dev/null 2>&1; then
+#   echo "[✓] Captured files from the UERANSIM machine copied successfully."
+# else
+#   echo "❌ Failed to copy captured files from the UERANSIM machine. Check your connection or file paths."
+#   exit 1
+# fi
 
 # Start analysis workflow
-echo "[*] Starting analysis workflow on captured files..."
-python3 analyze_captures.py --input ./captures/ --output ./analysis_results/
-echo "[✓] Analysis workflow completed successfully."
+# ! commented out for now
+# echo "[*] Starting analysis workflow on captured files..."
+# python3 analyze_captures.py --input ./captures/ --output ./analysis_results/
+# echo "[✓] Analysis workflow completed successfully."
 
 # Cleanup remote processes
 echo "[*] Cleaning up remote processes..."

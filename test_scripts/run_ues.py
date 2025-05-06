@@ -12,7 +12,7 @@ PID_FILE = "ue-pids.txt"
 default_delay = 0.01  # 10 ms
 launched_processes = []
 
-def run_ues(count, mean_delay):
+def run_ues(count, mean_delay, duration):
     if args.mode == "exponential":
         delays = np.random.exponential(scale=mean_delay, size=count - 1)
     elif args.mode == "linear":
@@ -32,14 +32,11 @@ def run_ues(count, mean_delay):
             if i < count:
                 time.sleep(delays[i - 1])
 
-    # Keep UEs running
-    print("✅ All UEs launched. Keeping UEs running...")
-    try:
-        while True:
-            time.sleep(10)  # Keep the script alive
-    except KeyboardInterrupt:
-        print("🛑 Terminating UEs...")
-        kill_ues()
+    print(f"✅ All UEs launched. Keeping UEs running for {duration} seconds...")
+    time.sleep(duration)  # Keep UEs running for the specified duration
+
+    print("🛑 Terminating UEs...")
+    kill_ues()
 
 def kill_ues():
     if not os.path.exists(PID_FILE):
@@ -68,9 +65,10 @@ if __name__ == "__main__":
     parser.add_argument("--mean-delay", "-md", type=float, default=default_delay, help="Average delay between UE starts (seconds)")
     parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
     parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Type of delay buffer between UE PDU session starts")
+    parser.add_argument("--duration", "-d", type=int, default=120, help="Duration to keep UEs running (seconds)")
     args = parser.parse_args()
 
     if args.kill:
         kill_ues()
     elif args.count:
-        run_ues(args.count, args.mean_delay)
+        run_ues(args.count, args.mean_delay, args.duration)
