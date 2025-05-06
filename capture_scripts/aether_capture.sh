@@ -170,13 +170,9 @@ if ! wait "$host_pid"; then
     fi
 fi
 
-# Ensure the tcpdump process is killed if still running
-if ps -p "$host_pid" > /dev/null 2>&1; then
-    echo "[INFO] Killing tcpdump process (PID: $host_pid) as it is still running."
-    sudo kill -9 "$host_pid" 2>/dev/null || echo "[WARNING] Failed to kill tcpdump process (PID: $host_pid)."
-else
-    echo "[INFO] Tcpdump process (PID: $host_pid) is no longer running."
-fi
+# Terminate all tcpdump processes
+echo "[INFO] Terminating all tcpdump processes..."
+sudo pkill tcpdump 2>/dev/null || echo "[WARNING] No tcpdump processes were running."
 
 # Check if any processes failed
 if [ ${#failed_pids[@]} -gt 0 ]; then
