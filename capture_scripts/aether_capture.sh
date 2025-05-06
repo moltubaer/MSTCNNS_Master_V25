@@ -122,8 +122,15 @@ done
 
 echo "[*] Waiting for signal file: $SIGNAL_FILE"
 
+timeout=300  # 5 minutes
+elapsed=0
 while [ ! -f "$SIGNAL_FILE" ]; do
-    sleep 5  # Check every 5 seconds
+    if [ $elapsed -ge $timeout ]; then
+        echo "[ERROR] Timeout reached while waiting for signal file."
+        exit 1
+    fi
+    sleep 5
+    elapsed=$((elapsed + 5))
 done
 
 echo "[*] Signal file detected. Stopping capture processes."
