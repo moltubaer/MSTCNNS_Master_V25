@@ -113,8 +113,7 @@ for pod in "${matched_pods[@]}"; do
 done
 
 # Start capture script on the Aether core machine
-echo "[*] Starting capture script on the Aether core machine for $CAPTURE_DURATION seconds..."
-run_remote_script "$CORE_KEY" "$CORE_CONNECTION" "$CORE_CAPTURE_SCRIPT" "$CAPTURE_DURATION"
+echo "[*] Starting capture processes locally for $CAPTURE_DURATION seconds..."
 
 echo "[*] Signal file detected. Stopping capture processes."
 
