@@ -1,6 +1,41 @@
 #!/bin/bash
 
 # ===
+# Argument Parsing
+# ===
+
+# Default values
+duration=120
+ue_count=100  # Default UE count
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --duration)
+            duration="$2"
+            shift 2
+            ;;
+        --ue-count)
+            ue_count="$2"
+            shift 2
+            ;;
+        *)
+            echo "❌ Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate UE count
+if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
+    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    exit 1
+fi
+
+echo "[*] Capture duration set to $duration seconds."
+echo "[*] UE count set to $ue_count."
+
+# ===
 # find right names of aether pods (NF's)
 # ===
 
@@ -67,29 +102,30 @@ fi
 # GET READY
 # ===
 
-# Interface for pod, any to caputure all
+# Interface for pod, any to capture all
 pod_interface="any"
-
 host_interface="any"
 
-duration=${1:-120} # Default, 120 secods if not provided
-
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
-host_output_dir="/home/ubuntu/pcap_captures/aether-$timestamp"
-host_pcap_path="$host_output_dir/host_capture.pcap"
-mkdir -p "$host_output_dir"
+host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-aether-$timestamp"
+host_pcap_path="$host_output_dir/${ue_count}_host_capture.pcap"
+mkdir -p "$host_output_dir/logs"
 
 # ===
 # HOST OS CAPTURE
 # ===
 
-# Start metrics capture in the background for 120 seconds
-python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
+# Start metrics capture in the background
+python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration "$duration" &
 
-echo "[DEBUG] Starting tcpdump on host interface: $host_interface"
+# Start tcpdump on the host interface
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/host_tcpdump.log" 2>&1 &
-host_pid=$!  # Store the process ID of the tcpdump command
-echo "[DEBUG] tcpdump on host interface started in the background (PID: $host_pid)."
+host_pid=$!  # Capture the PID of the tcpdump process
+
+if [ -z "$host_pid" ]; then
+    echo "[ERROR] Failed to start tcpdump. Exiting."
+    exit 1
+fi
 
 # ===
 # POD CAPTURES
@@ -104,11 +140,11 @@ for pod in "${matched_pods[@]}"; do
 
     if [[ "$pod" == "upf-0" ]]; then
         echo "[DEBUG] Starting kubectl sniff for pod: $pod (UPF) on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -c pfcp-agent -i "$pod_interface" -o "$host_output_dir/${ue_count}_${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     else
         echo "[DEBUG] Starting kubectl sniff for pod: $pod on interface: $pod_interface"
-        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${pod}_capture.pcap" > "$host_output_dir/${pod}_sniff.log" 2>&1 &
+        timeout "$duration" kubectl sniff -n aether-5gc "$pod" -i "$pod_interface" -o "$host_output_dir/${ue_count}_${pod}_capture.pcap" > "$host_output_dir/logs/${pod}_sniff.log" 2>&1 &
         pod_pids+=($!)  # Store the process ID of the kubectl sniff command
     fi
 
@@ -126,16 +162,15 @@ failed_pids=()
 
 # Wait for all pod capture processes to complete
 for pid in "${pod_pids[@]}"; do
-    if ! wait "$pid"; then
-        exit_code=$?
-        if [ $exit_code -eq 0 ]; then
-            echo "[INFO] Pod capture process (PID: $pid) completed successfully."
-        elif [ $exit_code -eq 124 ]; then
-            echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
-        else
-            echo "[ERROR] A pod capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
-            failed_pids+=("$pid")  # Track the failed PID
-        fi
+    wait "$pid"
+    exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo "[INFO] Pod capture process (PID: $pid) completed successfully."
+    elif [ $exit_code -eq 124 ]; then
+        echo "[INFO] Pod capture process (PID: $pid) was terminated by timeout. Treating as success."
+    else
+        echo "[ERROR] A pod capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
+        failed_pids+=("$pid")  # Track the failed PID
     fi
 done
 
@@ -151,6 +186,10 @@ if ! wait "$host_pid"; then
         failed_pids+=("$host_pid")  # Track the failed PID
     fi
 fi
+
+# Terminate all tcpdump processes
+echo "[INFO] Terminating all tcpdump processes..."
+sudo pkill tcpdump 2>/dev/null || echo "[WARNING] No tcpdump processes were running."
 
 # Check if any processes failed
 if [ ${#failed_pids[@]} -gt 0 ]; then
