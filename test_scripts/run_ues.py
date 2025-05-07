@@ -11,7 +11,7 @@ PID_FILE = "ue-pids.txt"
 
 default_delay = 0.01  # 10 ms
 
-def run_ues(count, mean_delay, mode, core): # duration out of arguments
+def run_ues(count, mean_delay, duration, mode, core):
     if mode == "exponential":
         delays = np.random.exponential(scale=mean_delay, size=count - 1)
     elif mode == "linear":
@@ -31,13 +31,12 @@ def run_ues(count, mean_delay, mode, core): # duration out of arguments
             if i < count:
                 time.sleep(delays[i - 1])
 
-    # ! lets try to keep the UEs running
-    # print(f"✅ All UEs launched. Keeping UEs running for {duration} seconds...")
-    # time.sleep(duration)  # Keep UEs running for the specified duration
-    # print("🛑 Terminating UEs...")
-    # kill_ues()
+    print(f"✅ All UEs launched. Keeping UEs running for {duration} seconds...")
+    time.sleep(duration)  # Keep UEs running for the specified duration
 
-# better to juse use pkill nr-ue in the terminal
+    print("🛑 Terminating UEs...")
+    kill_ues()
+
 def kill_ues():
     if not os.path.exists(PID_FILE):
         print("⚠️ No PID file found. Did you run UEs from this script?")
@@ -58,14 +57,13 @@ def kill_ues():
     os.remove(PID_FILE)
     print("✅ All UEs terminated and PID file cleaned up.")
 
-# todo: new arg stable: example, default_delay 0.1 or 0.01 or 0.05
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch and manage UERANSIM UEs.")
     parser.add_argument("--count", "-c", type=int, help="Number of UEs to run")
     parser.add_argument("--mean-delay", "-md", type=float, default=default_delay, help="Average delay between UE starts (seconds)")
     parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Core network type")
     parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Delay mode between UE starts")
-    # parser.add_argument("--duration", "-d", type=int, default=120, help="Duration to keep UEs running (seconds)")
+    parser.add_argument("--duration", "-d", type=int, default=120, help="Duration to keep UEs running (seconds)")
     parser.add_argument("--kill", "-k", action="store_true", help="Kill UEs started from PID file")
     args = parser.parse_args()
 
