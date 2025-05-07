@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds] --count [number_of_ues] --test [test_script] --mode [linear|exponential]
+# Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds] --count [number_of_ues] --test [test_script] --mode [linear|exponential] --mean-delay [seconds]
 
 CONFIG_DIR="./cores"
 CONFIG_FILE=""
@@ -8,6 +8,7 @@ DURATION=120  # Default duration
 UE_COUNT=100  # Default number of UEs
 TEST_SCRIPT="run_ues.py"  # Default test script
 MODE="linear"  # Default mode
+MEAN_DELAY=0.01  # Default mean delay (10 ms)
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -30,6 +31,10 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --mode)
       MODE="$2"
+      shift 2
+      ;;
+    --mean-delay)
+      MEAN_DELAY="$2"
       shift 2
       ;;
     *)
@@ -60,11 +65,16 @@ if [[ "$MODE" != "linear" && "$MODE" != "exponential" ]]; then
   exit 1
 fi
 
+# Validate the mean delay
+if ! [[ "$MEAN_DELAY" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+  echo "❌ Invalid mean delay: $MEAN_DELAY. It must be a positive number."
+  exit 1
+fi
+
 # Calculate the duration for aether_capture.sh
-MEAN_DELAY=0.01  # Mean delay between UE registrations (in seconds)
 BUFFER_TIME=30  # Additional buffer time (in seconds)
 
-# Total duration = (UE_COUNT * $MEAN_DELAY + $BUFFER_TIME)
+# Total duration = (UE_COUNT * MEAN_DELAY + BUFFER_TIME)
 CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
 CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
 echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
@@ -80,13 +90,13 @@ sleep 5
 
 # Start the selected test script on the UERANSIM machine
 echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core aether --mode $MODE --mean-delay 0.01 --duration $DURATION > /tmp/ues_output.log 2>&1" &
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
 # Wait for both processes to complete
 echo "[*] Waiting for both capture and UERANSIM processes to complete..."
 wait "$capture_pid"
-echo "[✓] Capture script on the Aether core machine completed."
+echo "[✓] Capture script on the $CORE core machine completed."
 
 wait "$ues_pid"
 echo "[✓] $TEST_SCRIPT script completed on the UERANSIM machine."
