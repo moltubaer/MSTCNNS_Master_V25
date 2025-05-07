@@ -9,6 +9,8 @@ def extract_nf(file_name: str) -> str:
     for nf in ["amf", "ausf", "udm", "smf", "pcf", "nrf", "bsf", "scp", "nssf", "udr", "upf"]:
         if f"_{nf}_" in file_name.lower():
             return nf
+    if "ueransim" in file_name.lower():
+        return "ueransim"
     return "unknown"
 
 def extract_ue_count(folder_name: str) -> str:
@@ -25,7 +27,7 @@ def convert_pcap_recursive(root_dir: str):
 
             # Choose output format and filter
             nf = extract_nf(file)
-            if nf == "amf":
+            if nf in ["amf", "ueransim"]:
                 output_ext = ".pdml"
                 tshark_format = "pdml"
                 display_filter = "ngap"
@@ -73,5 +75,5 @@ def convert_pcap_recursive(root_dir: str):
                 print(f"[FAIL] {input_path}: {e}")
 
 if __name__ == "__main__":
-    root = "/mnt/c/Dev/master/pcap_captures"  # Set your root dir
+    root = "/mnt/c/Dev/master/pcap_captures/07.05_linear"  # Set your root dir
     convert_pcap_recursive(root)

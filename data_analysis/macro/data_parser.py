@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 # Re-define paths after code state reset
-input_dir = "./csv"
+input_dir = "./csv/free5gc/ue_reg"
 output_dir = "./parsed_csv"
 os.makedirs(output_dir, exist_ok=True)
 
@@ -15,11 +15,10 @@ for file_name in csv_files:
     df = pd.read_csv(file_path)
 
     # Ensure required columns exist
-    if {'timestamp', 'direction', 'ran_ue_ngap_id'}.issubset(df.columns):
+    if {'timestamp', 'direction', 'id'}.issubset(df.columns):
         results = []
-
         # Group by ran_ue_ngap_id
-        grouped = df.groupby('ran_ue_ngap_id')
+        grouped = df.groupby('id')
 
         for ue_id, group in grouped:
             if len(group) == 2:

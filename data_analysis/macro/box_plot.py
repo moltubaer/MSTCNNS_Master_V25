@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+import re
 
 def load_data(dir, mode):
     core_labels = {
@@ -29,7 +30,12 @@ def load_data(dir, mode):
             if not label:
                 continue  # skip unknown cores
         else:  # 'filename' mode
-            label = os.path.splitext(file_name)[0]
+            label = re.match(r"^(\d+)", file_name)
+            if label:
+                label = label.group(1)
+            else:
+                label = "X"
+                # label = os.path.splitext(file_name)[0]
 
         df = pd.read_csv(file_path)
         if 'delta_ms' in df.columns:
@@ -45,9 +51,16 @@ def plot_box(core_data, output_path):
 
     plt.figure(figsize=(10, 6))
     plt.boxplot(data, labels=labels, showmeans=True)
-    plt.ylabel("Processing Time (ms)")
+    plt.xlabel("UE Count", fontsize=14)
+    plt.ylabel("Processing Time (ms)", fontsize=14)
     plt.title("Box Plot of Operation Latency Across 5G Core Networks")
+    plt.title(name)
     plt.grid(True)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.ylim(bottom=0)
+    # plt.ylim(top=40)
+
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
     full_output_path = os.path.join(output_dir, output_path)
@@ -86,8 +99,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate a box plot of delta_ms values from parsed CSVs.")
     parser.add_argument("--dir", default="./parsed_csv", help="Path to directory with CSVs.")
     parser.add_argument("--mode", choices=["auto", "core"], default="auto", help="Label strategy.")
-    parser.add_argument("--output", default="box_plot.png", help="Output PNG filename.")
+    parser.add_argument("--output", default="free5gc_ue_dereg_box", help="Output PNG filename.")
     args = parser.parse_args()
+
+    name = "Free5GC UERANSIM - UE Deregistration"
 
     core_data = load_data(args.dir, args.mode)
     

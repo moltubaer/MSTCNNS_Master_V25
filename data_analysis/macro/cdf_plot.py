@@ -1,4 +1,5 @@
 import os
+import re
 import csv
 import argparse
 import pandas as pd
@@ -20,7 +21,6 @@ def plot_cdf(data, label, show_percentiles=True):
     #     plt.text(p90, 0.15, f"P90: {p90:.1f} ms", rotation=90, verticalalignment='bottom', color='gray')
 
 def main(dir, mode):
-    output_path = "./plots"
     core_labels = {
         "open5gs": "Open5GS",
         "magma": "MagmaCore",
@@ -44,7 +44,12 @@ def main(dir, mode):
             if not label:
                 continue  # Skip files that don't match known cores
         else:  # mode == "filename"
-            label = os.path.splitext(file_name)[0]
+            label = re.match(r"^(\d+)", file_name)
+            if label:
+                label = label.group(1)
+            else:
+                label = "X"
+                # label = os.path.splitext(file_name)[0]
 
         df = pd.read_csv(file_path)
         if 'delta_ms' in df.columns:
@@ -62,14 +67,16 @@ def main(dir, mode):
         if data:
             plot_cdf(data, label)
 
-    plt.xlabel("Processing Time (ms)")
-    plt.ylabel("Cumulative Probability")
-    plt.title("CDF Open5GS UE Registration")
+    plt.xlabel("Processing Time (ms)", fontsize=14)
+    plt.ylabel("Cumulative Probability", fontsize=14)
+    plt.title(name)
     plt.legend()
     plt.grid(True)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.xlim(left=0)  # Ensures x-axis starts at 0
     plt.tight_layout()
     # After plt.tight_layout()
-    output_basename = "cdf_plot"
     plt.savefig(f"{output_path}/{output_basename}.png")
 
     # Save percentiles to CSV
@@ -92,5 +99,9 @@ if __name__ == "__main__":
     parser.add_argument("--dir", default="./parsed_csv")
     parser.add_argument("--mode", choices=["auto", "core"], default="auto",)
     args = parser.parse_args()
+
+    name = "Open5GS UERANSIM - UE Deregistration"
+    output_basename = "open5gs_ue_dereg_cdf"
+    output_path = "./plots"
 
     main(args.dir, args.mode)
