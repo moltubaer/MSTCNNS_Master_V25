@@ -90,7 +90,7 @@ sleep 5
 
 # Start the selected test script on the UERANSIM machine
 echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
 # Wait for both processes to complete
