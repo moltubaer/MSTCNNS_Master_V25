@@ -10,7 +10,7 @@ parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g
 args = parser.parse_args()
 
 # === Input/Output ===
-path = "../data/open5gs/ue_reg/ueransim/"
+path = "../../"
 input_file = f"{args.count}.ue_reg"
 output_csv = f"csv/{input_file}.csv"
 
@@ -20,6 +20,7 @@ output_csv = f"csv/{input_file}.csv"
 # output_csv = "./csv/" + input_file + ".csv"
 
 # === Procedure Code Pairs (Initiating -> Release) ===
+# todo: Add a flag for what to analyze
 PROCEDURE_CODE_PAIRS = [
     {"first": "15", "release": "14"},   # UE Registration
     # {"first": "46", "release": "41"},   # UE Deregistration

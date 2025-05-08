@@ -100,8 +100,8 @@ if __name__ == "__main__":
     parser.add_argument("--mode", choices=["auto", "core"], default="auto",)
     args = parser.parse_args()
 
-    name = "Open5GS UERANSIM - UE Deregistration"
-    output_basename = "open5gs_ue_dereg_cdf"
+    name = "AETHER UERANSIM - UE Deregistration"
+    output_basename = "aether_ue_dereg_cdf"
     output_path = "./plots"
 
     main(args.dir, args.mode)

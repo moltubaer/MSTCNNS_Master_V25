@@ -79,8 +79,8 @@ CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
 CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
 echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
 
-# Start capture script on the Aether core machine
-echo "[*] Starting capture script on the Aether core machine for $CAPTURE_DURATION seconds..."
+# Start capture script on the core machine
+echo "[*] Starting capture script on the $CORE core machine for $CAPTURE_DURATION seconds..."
 ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT > /tmp/capture.log 2>&1" &
 capture_pid=$!  # Capture the PID of the capture process
 
@@ -93,21 +93,29 @@ echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
 ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
-# Wait for both processes to complete
-echo "[*] Waiting for both capture and UERANSIM processes to complete..."
+# Strip .py extension from the test script name for descriptive filenames
+TEST_SCRIPT_NAME=$(basename "$TEST_SCRIPT" .py)
+
+# Start the UERANSIM capture script
+echo "[*] Starting UERANSIM capture script..."
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh --duration $CAPTURE_DURATION --ue-count $UE_COUNT --mode $MODE --test $TEST_SCRIPT_NAME > /tmp/ueransim_capture.log 2>&1" &
+ueransim_capture_pid=$!  # Capture the PID of the UERANSIM capture process
+
+# Wait for all processes to complete
+echo "[*] Waiting for all processes to complete..."
 wait "$capture_pid"
 echo "[✓] Capture script on the $CORE core machine completed."
 
 wait "$ues_pid"
 echo "[✓] $TEST_SCRIPT script completed on the UERANSIM machine."
 
+wait "$ueransim_capture_pid"
+echo "[✓] UERANSIM capture script completed."
+
 # Cleanup remote processes
 echo "[*] Cleaning up remote processes..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1 # !maybe not do this
 ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
 echo "[✓] Cleanup completed."
 
 echo "[✓] Workflow completed successfully."
-
-
-# todo: cleanup of nr-gnb and nr-ue after capture on aether sd-core has finsihed

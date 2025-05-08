@@ -1,5 +1,40 @@
 #!/bin/bash
 
+# ===
+# Argument Parsing
+# ===
+
+# Default values
+duration=120
+ue_count=100
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --duration)
+            duration="$2"
+            shift 2
+            ;;
+        --ue-count)
+            ue_count="$2"
+            shift 2
+            ;;
+        *)
+            echo "❌ Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate UE count
+if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
+    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    exit 1
+fi
+
+echo "[*] Capture duration set to $duration seconds."
+echo "[*] UE count set to $ue_count."
+
 # ========================
 # CONFIGURATION
 # ========================
@@ -13,26 +48,25 @@ container_interface="any"
 # Interface on the host OS to capture from (e.g., eth0, br-xxxx)
 host_interface="any"
 
-# Capture duration in seconds
-duration=${1:-120}  # default to 120 seconds if not provided
-
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
-host_output_dir="/home/ubuntu/pcap_captures/free5gc-$timestamp"
-mkdir -p "$host_output_dir"
+host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-free5gc-${timestamp}"
+mkdir -p "$host_output_dir/logs"
 
 # ========================
 # HOST OS CAPTURE
 # ========================
 
-# Start metrics capture in background for 120 seconds
-# python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
-
 echo "[*] Starting tcpdump on host interface: $host_interface"
 
 host_pcap_path="$host_output_dir/host_capture.pcap"
-sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 &
+sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/logs/host_tcpdump.log" 2>&1 &
 host_pid=$!
+
+if [ -z "$host_pid" ]; then
+    echo "[ERROR] Failed to start tcpdump on host interface. Exiting."
+    exit 1
+fi
 
 # ========================
 # CONTAINER CAPTURES
@@ -48,11 +82,11 @@ for container in "${containers[@]}"; do
     if [[ "$container" == "free5gc_upf" ]]; then
         # UPF has bash, use bash
         docker exec "$container" \
-            bash -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > /dev/null 2>&1 &
+            bash -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > "$host_output_dir/logs/${container}_tcpdump.log" 2>&1 &
     else
         # Default to sh for others
         docker exec "$container" \
-            sh -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > /dev/null 2>&1 &
+            sh -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > "$host_output_dir/logs/${container}_tcpdump.log" 2>&1 &
     fi
     container_pids+=($!)
 done
@@ -62,9 +96,36 @@ done
 # ========================
 
 echo "[*] Waiting for all tcpdump processes to complete..."
-wait "${container_pids[@]}"
-wait "$host_pid"
-echo "[*] All tcpdump processes completed."
+
+# Track failures
+failed_pids=()
+
+# Wait for all container capture processes
+for pid in "${container_pids[@]}"; do
+    wait "$pid"
+    exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo "[INFO] Container capture process (PID: $pid) completed successfully."
+    elif [ $exit_code -eq 124 ]; then
+        echo "[INFO] Container capture process (PID: $pid) was terminated by timeout. Treating as success."
+    else
+        echo "[ERROR] A container capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
+        failed_pids+=("$pid")  # Track the failed PID
+    fi
+done
+
+# Wait for the host capture process
+if ! wait "$host_pid"; then
+    exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo "[INFO] Host capture process (PID: $host_pid) completed successfully."
+    elif [ $exit_code -eq 124 ]; then
+        echo "[INFO] Host capture process (PID: $host_pid) was terminated by timeout. Treating as success."
+    else
+        echo "[ERROR] Host capture process (PID: $host_pid) failed with exit code $exit_code. Check $host_output_dir/logs/host_tcpdump.log for details."
+        failed_pids+=("$host_pid")  # Track the failed PID
+    fi
+fi
 
 # ========================
 # COPY PCAPS TO HOST DIR
@@ -77,10 +138,16 @@ for container in "${containers[@]}"; do
     dest_path="$host_output_dir/${container}_capture.pcap"
 
     echo "  [+] Copying from $container:$src_path"
-    docker cp "$container:$src_path" "$dest_path"
+    docker cp "$container:$src_path" "$dest_path" > "$host_output_dir/logs/${container}_copy.log" 2>&1
+
+    if [ $? -eq 0 ]; then
+        echo "  [INFO] Successfully copied $container:$src_path to $dest_path"
+    else
+        echo "  [ERROR] Failed to copy $container:$src_path. Check $host_output_dir/logs/${container}_copy.log for details."
+    fi
 
     # Clean up inside the container
-    docker exec "$container" rm -f "$src_path"
+    docker exec "$container" rm -f "$src_path" > /dev/null 2>&1
 done
 
 # ========================

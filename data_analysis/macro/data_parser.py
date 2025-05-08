@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 # Re-define paths after code state reset
-input_dir = "./csv/free5gc/ue_reg"
+input_dir = "./csv"
 output_dir = "./parsed_csv"
 os.makedirs(output_dir, exist_ok=True)
 
