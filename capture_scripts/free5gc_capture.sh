@@ -22,7 +22,7 @@ mkdir -p "$host_output_dir"
 # HOST OS CAPTURE
 # ========================
 
-echo "[*] Starting tcpdump on host interface: $host_interface for $duration seconds"
+echo "[*] Starting tcpdump on core1 interface: $host_interface for $duration seconds"
 
 host_pcap_path="$host_output_dir/host_capture.pcap"
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 &

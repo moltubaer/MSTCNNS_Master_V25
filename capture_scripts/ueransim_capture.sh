@@ -3,9 +3,6 @@
 # Default to 5 seconds if not provided
 duration=${1:-5}
 
-echo "ueransim_capture.sh"
-echo "Duration: $duration"
-
 host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"
@@ -15,7 +12,7 @@ pids=()
 
 # Start tcpdump on host
 host_capture="$output_dir/${timestamp}_ueransim.pcap"
-echo "[+] Starting tcpdump on host interface: $host_interface"
+echo "[+] Starting tcpdump on ueransim interface: $host_interface for $duration seconds"
 timeout "$duration" tcpdump -tttt -i "$host_interface" -w "$host_capture" > /dev/null 2>&1 &
 pids+=($!)
 
