@@ -33,8 +33,8 @@ install_tcpdump() {
         docker exec "$container_name" apk add tcpdump
     elif [ "$os_type" = "debian" ]; then
         echo " -> Detected Debian-based container"
-        docker exec "$container_name" apt update
-        docker exec "$container_name" apt install -y tcpdump
+        docker exec "$container_name" apt-get update
+        docker exec "$container_name" apt-get install -y tcpdump
     else
         echo " -> Unknown OS in $container_name. Skipping."
     fi
