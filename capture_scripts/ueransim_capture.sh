@@ -1,6 +1,23 @@
 #!/bin/bash
 
-duration=${1:-120}  # default to 120 seconds if not provided
+# === Argument Parsing ===
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --duration)
+      DURATION="$2"
+      shift 2
+      ;;
+    *)
+      echo "❌ Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Default to 120 seconds if not provided
+duration=${DURATION:-120}
+
 host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"

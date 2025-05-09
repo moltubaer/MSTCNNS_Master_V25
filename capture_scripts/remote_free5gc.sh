@@ -13,15 +13,14 @@ core1_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/free5gc_capture.sh
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
 # ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/control_plane_tests/single_ue_reg.sh"
 
-# Default duration
-DURATION=120
-
-# Parse optional arguments
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
+# === Argument Parsing ===
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
     --duration)
       DURATION="$2"
       shift 2
+      echo "Duration is $DURATION"
       ;;
     *)
       echo "❌ Unknown argument: $1"
@@ -29,6 +28,9 @@ while [[ "$#" -gt 0 ]]; do
       ;;
   esac
 done
+
+# Default value if not specified
+DURATION=${DURATION:-60}
 
 # ========================
 # EXECUTE REMOTE SCRIPTS

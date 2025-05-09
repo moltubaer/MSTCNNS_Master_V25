@@ -7,14 +7,26 @@
 # List of Free5gc containers to capture from
 containers=("free5gc_amf" "free5gc_smf" "free5gc_upf" "free5gc_udm" "free5gc_ausf" "free5gc_pcf" "free5gc_nssf" "free5gc_udr" "free5gc_nrf")
 
-# Interface inside the containers (use "any" to capture all)
 container_interface="any"
-
-# Interface on the host OS to capture from (e.g., eth0, br-xxxx)
 host_interface="any"
 
-# Capture duration in seconds
-duration=${1:-120}  # default to 120 seconds if not provided
+# === Argument Parsing ===
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --duration)
+      DURATION="$2"
+      shift 2
+      ;;
+    *)
+      echo "❌ Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Default to 120 seconds if not provided
+duration=${DURATION:-120}
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
