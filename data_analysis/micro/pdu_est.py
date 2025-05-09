@@ -22,8 +22,6 @@ path = args.input
 input_file = args.name  # 100.smf.pdu_est.json
 output_csv = f"{args.output}/{input_file}.csv"
 
-
-
 # === Pattern Definitions ===
 pattern_pcf = [
     re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*?"pduSessionId"\s*:\s*\d+', re.DOTALL),
