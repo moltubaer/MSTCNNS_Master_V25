@@ -1,9 +1,17 @@
 import os
 import pandas as pd
+import argparse
+
+# === CLI Arguments ===
+parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
+# parser.add_argument("--test", "-t", choices=["ue_reg", "ue_dereg", "pdu_est", "pdu_rel"], type=str)
+parser.add_argument("--input", "-i", required=True, type=str, help="Input directory")
+parser.add_argument("--output", "-o", default="./parsed_csv", type=str)
+args = parser.parse_args()
 
 # Re-define paths after code state reset
-input_dir = "./csv/free5gc/ue_reg"
-output_dir = "./parsed_csv"
+input_dir = args.input      # ./csv/free5gc/ue_reg
+output_dir = args.output
 os.makedirs(output_dir, exist_ok=True)
 
 # List all CSV files in the input directory
