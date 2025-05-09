@@ -1,22 +1,7 @@
 #!/bin/bash
 
-# === Argument Parsing ===
-while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
-    --duration)
-      DURATION="$2"
-      shift 2
-      ;;
-    *)
-      echo "❌ Unknown argument: $1"
-      exit 1
-      ;;
-  esac
-done
-
-# Default to 120 seconds if not provided
-duration=${DURATION:-120}
+# Default to 5 seconds if not provided
+duration=${1:-5}
 
 echo "ueransim_capture.sh"
 echo "Duration: $duration"

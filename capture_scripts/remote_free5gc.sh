@@ -11,39 +11,22 @@ ueransim="ubuntu@10.100.51.82"
 system_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py"
 core1_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/free5gc_capture.sh"
 ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh"
-# ueransim_script="/home/ubuntu/MSTCNNS_Master_V25/capture_scripts/control_plane_tests/single_ue_reg.sh"
-
-# === Argument Parsing ===
-while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
-    --duration)
-      DURATION="$2"
-      shift 2
-      echo "Duration is $DURATION"
-      ;;
-    *)
-      echo "❌ Unknown argument: $1"
-      exit 1
-      ;;
-  esac
-done
 
 # Default value if not specified
-DURATION=${DURATION:-60}
+DURATION=${1:-5}
+
+echo "Duration is $DURATION"
 
 # ========================
 # EXECUTE REMOTE SCRIPTS
 # ========================
 
 echo "[*] Running script on $core1..."
-# ssh -tt "$core1" "sudo bash $core1_script $DURATION && python3 $system_script -d $DURATION" &
 ssh -tt "$core1" "sudo bash $core1_script $DURATION" &
 ssh -tt "$core1" "sudo python3 $system_script -d $DURATION" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
-# ssh -tt "$ueransim" "sudo bash $ueransim_script $DURATION && python3 $system_script -d $DURATION" &
 ssh -tt "$ueransim" "sudo bash $ueransim_script $DURATION" &
 ssh -tt "$ueransim" "sudo python3 $system_script -d $DURATION" &
 PID2=$!
