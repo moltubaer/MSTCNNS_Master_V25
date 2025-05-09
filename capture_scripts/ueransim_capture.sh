@@ -14,7 +14,7 @@ timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 pids=()
 
 # Start tcpdump on host
-host_capture="$output_dir/ueransim_capture_${timestamp}.pcap"
+host_capture="$output_dir/${timestamp}_ueransim.pcap"
 echo "[+] Starting tcpdump on host interface: $host_interface"
 timeout "$duration" tcpdump -tttt -i "$host_interface" -w "$host_capture" > /dev/null 2>&1 &
 pids+=($!)
