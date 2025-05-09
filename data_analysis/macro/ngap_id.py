@@ -8,13 +8,13 @@ import argparse
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--test", "-t", required=True, choices=["ue_reg", "ue_dereg", "pdu_est", "pdu_rel"], type=str)
-parser.add_argument("--dir", "-d", type=str)
+parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
 # path = "../data/linear/free5gc/ue_dereg/"
-path = args.dir
+path = args.input
 input_file = args.name
 output_dir = args.output
 output_csv = f"{output_dir}/{input_file}.csv"

@@ -9,13 +9,17 @@ import argparse
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
-parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--name", "-n", required=True, type=str)
+parser.add_argument("--input", "-i", type=str, help="Input directory")
+parser.add_argument("--output", "-o", default=".csv", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-path = "../data/core_ue_rel/"
-input_file = f"{args.pattern}_pdu_rel{args.count}"
-output_csv = f"csv/{input_file}.csv"
+# path = "../data/linear/open5gs/pdu_rel"
+path = args.input
+input_file = args.name  # 100.smf.pdu_rel.json
+output_csv = f"{args.output}/{input_file}.csv"
+
 
 # === Pattern Definitions ===
 pattern_smf = [

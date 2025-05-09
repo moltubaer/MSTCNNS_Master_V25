@@ -8,14 +8,16 @@ import argparse
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
-parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
-parser.add_argument("--count", "-c", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--name", "-n", required=True, type=str)
+parser.add_argument("--input", "-i", type=str, help="Input directory")
+parser.add_argument("--output", "-o", default=".csv", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-path = "../data/core_ue_dereg/"
-input_file = f"{args.pattern}_ue_dereg{args.count}"
-output_csv = f"csv/{input_file}.csv"
+# path = "../data/linear/open5gs/ue_dereg"
+path = args.input
+input_file = args.name  # 100.udm.ue_dereg.json
+output_csv = f"{args.output}/{input_file}.csv"
 
 # === Deregistration regex patterns ===
 patterns = [
@@ -45,7 +47,7 @@ def match_pattern_type(decoded_text):
 deregistration_events = []
 pattern_counters = {0: 1, 1: 1}  # Initialize counters for pattern 0 and 1
 
-with open(path + input_file + ".json", "r") as f:
+with open(path + "//" + input_file + ".json", "r") as f:
     packets = json.load(f)
 
 for pkt in packets:

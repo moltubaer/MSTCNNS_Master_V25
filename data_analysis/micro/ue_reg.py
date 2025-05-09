@@ -8,15 +8,17 @@ import argparse
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
-parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
-parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--name", "-n", required=True, type=str)
+parser.add_argument("--input", "-i", type=str, help="Input directory")
+parser.add_argument("--output", "-o", default=".csv", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-path = "../data/core_ue_reg/"
-# input_file = "udm_ue_reg500"
-input_file = f"{args.pattern}_ue_reg{args.count}"
-output_csv = f"csv/{input_file}.csv"
+# path = "../data/linear/open5gs/ue_reg/"
+path = args.input
+input_file = args.name  # 100.udm.ue_reg.json
+output_csv = f"{args.output}/{input_file}.csv"
+
 
 # === Pattern Definitions ===
 pattern_udm = [
