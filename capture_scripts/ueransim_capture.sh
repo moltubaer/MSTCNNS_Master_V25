@@ -13,9 +13,6 @@ mkdir -p "$output_dir"
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 pids=()
 
-# Start metrics capture in background for 120 seconds
-python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
-
 # Start tcpdump on host
 host_capture="$output_dir/ueransim_capture_${timestamp}.pcap"
 echo "[+] Starting tcpdump on host interface: $host_interface"
