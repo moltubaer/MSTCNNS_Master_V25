@@ -24,7 +24,7 @@ pids+=($!)
 wait "${pids[@]}"
 echo "[+] Capture complete."
 
-# echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
-# sudo chown -R ubuntu:ubuntu "$output_dir"
+echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
+sudo chown -R ubuntu:ubuntu "$output_dir"
 
 echo "[✓] .pcap file saved to $output_dir"
