@@ -18,6 +18,9 @@ done
 # Default to 120 seconds if not provided
 duration=${DURATION:-120}
 
+echo "ueransim_capture.sh"
+echo "Duration: $duration"
+
 host_interface="any"
 output_dir="/home/ubuntu/pcap_captures"
 mkdir -p "$output_dir"
@@ -35,11 +38,11 @@ timeout "$duration" tcpdump -tttt -i "$host_interface" -w "$host_capture" > /dev
 pids+=($!)
 
 # Wait for all tcpdump processes to complete
-echo "[*] Waiting for the capture to complete..."
+# echo "[*] Waiting for the capture to complete..."
 wait "${pids[@]}"
 echo "[+] Capture complete."
 
-echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
-sudo chown -R ubuntu:ubuntu "$output_dir"
+# echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
+# sudo chown -R ubuntu:ubuntu "$output_dir"
 
 echo "[✓] .pcap file saved to $output_dir"

@@ -28,6 +28,9 @@ done
 # Default to 120 seconds if not provided
 duration=${DURATION:-120}
 
+echo "ueransim_capture.sh"
+echo "Duration: $duration"
+
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 host_output_dir="/home/ubuntu/pcap_captures/free5gc-$timestamp"
