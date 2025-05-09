@@ -10,29 +10,11 @@ containers=("free5gc_amf" "free5gc_smf" "free5gc_upf" "free5gc_udm" "free5gc_aus
 container_interface="any"
 host_interface="any"
 
-# === Argument Parsing ===
-while [[ $# -gt 0 ]]; do
-  key="$1"
-  case $key in
-    --duration)
-      DURATION="$2"
-      shift 2
-      ;;
-    *)
-      echo "❌ Unknown argument: $1"
-      exit 1
-      ;;
-  esac
-done
-
-# Default to 120 seconds if not provided
-duration=${DURATION:-120}
-
-echo "ueransim_capture.sh"
-echo "Duration: $duration"
+# Default to 5 seconds if not provided
+duration=${1:-5}
 
 # Host output directory for collected pcaps
-timestamp=$(date +%Y.%m.%d_%H.%M.%S)
+timestamp=$(date +%Y.%m.%d_%H.%M)
 host_output_dir="/home/ubuntu/pcap_captures/free5gc-$timestamp"
 mkdir -p "$host_output_dir"
 
@@ -40,10 +22,7 @@ mkdir -p "$host_output_dir"
 # HOST OS CAPTURE
 # ========================
 
-# Start metrics capture in background for 120 seconds
-# python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration 120 &
-
-echo "[*] Starting tcpdump on host interface: $host_interface"
+echo "[*] Starting tcpdump on host interface: $host_interface for $duration seconds"
 
 host_pcap_path="$host_output_dir/host_capture.pcap"
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > /dev/null 2>&1 &
@@ -76,7 +55,7 @@ done
 # WAIT FOR ALL CAPTURES
 # ========================
 
-echo "[*] Waiting for all tcpdump processes to complete..."
+# echo "[*] Waiting for all tcpdump processes to complete..."
 wait "${container_pids[@]}"
 wait "$host_pid"
 echo "[*] All tcpdump processes completed."
@@ -85,7 +64,7 @@ echo "[*] All tcpdump processes completed."
 # COPY PCAPS TO HOST DIR
 # ========================
 
-echo "[*] Copying container .pcap files to host: $host_output_dir"
+# echo "[*] Copying container .pcap files to host: $host_output_dir"
 
 for container in "${containers[@]}"; do
     src_path="/tmp/${container}_capture.pcap"
