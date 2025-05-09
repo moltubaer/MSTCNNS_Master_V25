@@ -97,21 +97,22 @@ def write_stats_csv(core_data, output_path_csv):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate a box plot of delta_ms values from parsed CSVs.")
-    parser.add_argument("--dir", default="./parsed_csv", help="Path to directory with CSVs.")
-    parser.add_argument("--mode", choices=["auto", "core"], default="auto", help="Label strategy.")
-    parser.add_argument("--output", default="free5gc_ue_dereg_box", help="Output PNG filename.")
+    parser.add_argument("--input", "-i", default="./parsed_csv", type=str)
+    parser.add_argument("--mode", "-m", choices=["auto", "core"], default="auto")
+    parser.add_argument("--output", "-o", default="./plots", type=str)
+    parser.add_argument("--name", "-n", required=True, type=str)
     args = parser.parse_args()
 
     name = "Free5GC UERANSIM - UE Deregistration"
+    output_dir = args.output
 
-    core_data = load_data(args.dir, args.mode)
     
-    output_dir = "./plots/"
+    core_data = load_data(args.input, args.mode)
 
     if not core_data:
         print("No valid data found. Check your CSV files and label mode.")
     else:
-        plot_box(core_data, args.output)
-        stats_csv_path = os.path.join(output_dir, os.path.splitext(args.output)[0] + ".csv")
+        plot_box(core_data, args.name)
+        stats_csv_path = os.path.join(output_dir, os.path.splitext(args.name)[0] + ".csv")
         write_stats_csv(core_data, stats_csv_path)
         print(f"Stats written to {stats_csv_path}")
