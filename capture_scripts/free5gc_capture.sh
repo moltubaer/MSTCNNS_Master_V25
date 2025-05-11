@@ -14,7 +14,6 @@ host_interface="any"
 duration=${1:-5}
 
 # Host output directory for collected pcaps
-timestamp=$(date +%Y.%m.%d_%H.%M)
 host_output_dir="/home/ubuntu/pcap_captures/$(date +%Y.%m.%d_%H.%M)_free5gc"
 mkdir -p "$host_output_dir"
 
