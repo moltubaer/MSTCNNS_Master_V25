@@ -114,8 +114,9 @@ echo "[✓] UERANSIM capture script completed."
 
 # Cleanup remote processes
 echo "[*] Cleaning up remote processes..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1 # !maybe not do this
+echo " [+] Killing tcpdump on $CORE"
+# ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1 # !maybe not do this
 ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
-echo "[✓] Cleanup completed."
+# echo "[✓] Cleanup completed."
 
 echo "[✓] Workflow completed successfully."

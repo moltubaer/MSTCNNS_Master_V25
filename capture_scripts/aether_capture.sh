@@ -189,7 +189,7 @@ fi
 
 # Terminate all tcpdump processes
 echo "[INFO] Terminating all tcpdump processes..."
-sudo pkill tcpdump 2>/dev/null || echo "[WARNING] No tcpdump processes were running."
+# sudo pkill tcpdump 2>/dev/null || echo "[WARNING] No tcpdump processes were running."
 
 # Check if any processes failed
 if [ ${#failed_pids[@]} -gt 0 ]; then
