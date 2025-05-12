@@ -31,11 +31,9 @@ def run_ues(count, mean_delay, duration, mode, core):
             if i < count:
                 time.sleep(delays[i - 1])
 
-    print(f"✅ All UEs launched. Keeping UEs running for {duration} seconds...")
-    time.sleep(duration)  # Keep UEs running for the specified duration
+    # print(f"✅ All UEs launched. Keeping UEs running for {duration} seconds...")
+    # time.sleep(duration)  # Keep UEs running for the specified duration
 
-    print("🛑 Terminating UEs...")
-    kill_ues()
 
 def kill_ues():
     if not os.path.exists(PID_FILE):
