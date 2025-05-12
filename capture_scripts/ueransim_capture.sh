@@ -8,7 +8,7 @@
 # duration=${1:-5}
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 mode="linear"
 test_script="run_ues.py"
@@ -41,7 +41,7 @@ done
 
 # Validate UE count
 if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
-    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    echo "ueransim [ERROR] Invalid UE count: $ue_count. It must be a positive integer."
     exit 1
 fi
 

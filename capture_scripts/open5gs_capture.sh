@@ -5,7 +5,7 @@
 # ===
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 
 # Parse arguments
@@ -28,7 +28,7 @@ done
 
 # Validate UE count
 if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
-    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    echo "open5gs [ERROR] Invalid UE count: $ue_count. It must be a positive integer."
     exit 1
 fi
 
@@ -46,7 +46,7 @@ container_interface="any"
 host_interface="any"
 
 # Default to 5 seconds if not provided
-duration=${1:-5}
+# duration=${1:-5}
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
