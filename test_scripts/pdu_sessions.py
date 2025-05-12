@@ -78,7 +78,8 @@ if mode == "release":
             print(f.result())
 else:
     if args.mode == "exponential":
-        inter_arrival_times = np.random.exponential(scale=mean_delay, size=count - 1)
+        rng = np.random.default_rng(seed=69)
+        inter_arrival_times = rng.exponential(scale=mean_delay, size=count - 1)
     elif args.mode == "linear":
         inter_arrival_times = [mean_delay] * (count - 1)
 

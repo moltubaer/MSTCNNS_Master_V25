@@ -13,7 +13,8 @@ default_delay = 0.01  # 10 ms
 
 def run_ues(count, mean_delay, duration, mode, core):
     if mode == "exponential":
-        delays = np.random.exponential(scale=mean_delay, size=count - 1)
+        rng = np.random.default_rng(seed=69)
+        delays = rng.exponential(scale=mean_delay, size=count - 1)
     elif mode == "linear":
         delays = [mean_delay] * (count - 1)
 

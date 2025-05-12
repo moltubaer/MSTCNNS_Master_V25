@@ -45,7 +45,8 @@ def run_dereg(imsi):
 
 # === Delay Strategy ===
 if args.mode == "exponential":
-    delays = np.random.exponential(scale=mean_delay, size=args.count - 1)
+    rng = np.random.default_rng(seed=69)
+    delays = rng.exponential(scale=mean_delay, size=args.count - 1)
 else:
     delays = [mean_delay] * (args.count - 1)
 
