@@ -12,13 +12,14 @@ parser.add_argument("--count", "-c", type=int, required=True, help="Number of UE
 parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Delay pattern between deregistration events")
 parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
 parser.add_argument("--duration", const=0, type=int, help="Just to make it compatible with workflow script")
+parser.add_argument("--mean-delay", "-md", type=float, default=0.01, help="Average delay between UE starts (seconds)")
 args = parser.parse_args()
 
 # === CONFIGURATION ===
 start_index = 1
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 dereg_cmd = "deregister disable-5g"
-mean_delay = 0.01   # 10 ms
+mean_delay = args.mean_delay   # 10 ms
 
 # === Core IMSI Parameters ===
 open5gs_imsi_str = "001010000000001"

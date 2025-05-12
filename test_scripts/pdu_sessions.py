@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # === Configuration ===
-mean_delay = 0.01   # 10 ms
+mean_delay = 0.01   # 10 ms (default)
 start_index = 1
 nr_cli_path = "/home/ubuntu/UERANSIM/build/nr-cli"
 
@@ -27,12 +27,14 @@ parser.add_argument("--release", action="store_true", help="Release all sessions
 parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Type of delay buffer between UE PDU session starts")
 parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
 parser.add_argument("--duration", const=0, type=int, help="Just to make it compatible with workflow script")
+parser.add_argument("--mean-delay", "-md", type=float, default=mean_delay, help="Average delay between UE starts (seconds)")
 args = parser.parse_args()
 
 # === Determine mode and count ===
 mode = "release" if args.release else "establish"
 count = args.count
 core = args.core
+mean_delay = args.mean_delay
 
 
 if args.core == "open5gs":
