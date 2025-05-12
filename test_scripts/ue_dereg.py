@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description="Deregister UEs via nr-cli")
 parser.add_argument("--count", "-c", type=int, required=True, help="Number of UEs to deregister")
 parser.add_argument("--mode", choices=["linear", "exponential"], required=True, help="Delay pattern between deregistration events")
 parser.add_argument("--core", choices=["open5gs", "free5gc", "aether"], required=True, help="Type of delay buffer between UE PDU session starts")
-parser.add_argument("--duration", const=0, type=int, help="Just to make it compatible with workflow script")
+parser.add_argument("--duration", help="Just to make it compatible with workflow script")
 parser.add_argument("--mean-delay", "-md", type=float, default=0.01, help="Average delay between UE starts (seconds)")
 args = parser.parse_args()
 
