@@ -45,29 +45,18 @@ containers=("free5gc_amf" "free5gc_smf" "free5gc_upf" "free5gc_udm" "free5gc_aus
 container_interface="any"
 host_interface="any"
 
-<<<<<<< HEAD
-# Host output directory for collected pcaps
-timestamp=$(date +%Y.%m.%d_%H.%M.%S)
-host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-free5gc-${timestamp}"
-mkdir -p "$host_output_dir/logs"
-=======
 # Default to 5 seconds if not provided
 duration=${1:-5}
 
 # Host output directory for collected pcaps
 host_output_dir="/home/ubuntu/pcap_captures/$(date +%Y.%m.%d_%H.%M)_free5gc"
 mkdir -p "$host_output_dir"
->>>>>>> main
 
 # ========================
 # HOST OS CAPTURE
 # ========================
 
-<<<<<<< HEAD
 echo "[*] Starting tcpdump on host interface: $host_interface"
-=======
-echo "[*] Starting tcpdump on core1 interface: $host_interface for $duration seconds"
->>>>>>> main
 
 host_pcap_path="$host_output_dir/host_capture.pcap"
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/logs/host_tcpdump.log" 2>&1 &
@@ -105,7 +94,6 @@ done
 # WAIT FOR ALL CAPTURES
 # ========================
 
-<<<<<<< HEAD
 echo "[*] Waiting for all tcpdump processes to complete..."
 
 # Track failures
@@ -137,12 +125,11 @@ if ! wait "$host_pid"; then
         failed_pids+=("$host_pid")  # Track the failed PID
     fi
 fi
-=======
 # echo "[*] Waiting for all tcpdump processes to complete..."
+# ! may cause an error this, but still pushes it
 wait "${container_pids[@]}"
 wait "$host_pid"
 echo "[*] All tcpdump processes completed."
->>>>>>> main
 
 # ========================
 # COPY PCAPS TO HOST DIR
