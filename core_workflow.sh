@@ -6,7 +6,7 @@ CONFIG_DIR="./cores"
 CONFIG_FILE=""
 DURATION=120  # Default duration
 UE_COUNT=100  # Default number of UEs
-TEST_SCRIPT=""  # Default test script
+TEST_SCRIPT=""  # Default test script (empty to ensure it must be explicitly set)
 MODE="linear"  # Default mode
 MEAN_DELAY=0.01  # Default mean delay (10 ms)
 
@@ -44,6 +44,9 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
+# Debug: Print the value of TEST_SCRIPT
+echo "[DEBUG] TEST_SCRIPT is set to: $TEST_SCRIPT"
+
 # Ensure config file was specified and exists
 if [ -z "$CONFIG_FILE" ] || [ ! -f "$CONFIG_FILE" ]; then
   echo "Error: Config file not found. Use -e [aether|open5gs|free5gc] and ensure it exists in '$CONFIG_DIR'."
@@ -55,7 +58,7 @@ source "$CONFIG_FILE"
 
 # Validate the test script
 if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_sessions.py" && "$TEST_SCRIPT" != "ue_dereg.py" ]]; then
-  echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_session.py, ue_dereg.py."
+  echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_sessions.py, ue_dereg.py."
   exit 1
 fi
 
