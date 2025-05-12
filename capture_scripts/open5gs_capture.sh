@@ -45,9 +45,6 @@ containers=("open5gs_amf" "open5gs_smf" "open5gs_upf" "open5gs_udr" "open5gs_aus
 container_interface="any"
 host_interface="any"
 
-# Default to 5 seconds if not provided
-# duration=${1:-5}
-
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-open5gs-${timestamp}"
@@ -119,6 +116,11 @@ if ! wait "$host_pid"; then
         failed_pids+=("$host_pid")  # Track the failed PID
     fi
 fi
+# echo "[*] Waiting for all tcpdump processes to complete..."
+# ! may cause an error this, but still pushes it
+wait "${container_pids[@]}"
+wait "$host_pid"
+echo "[*] All tcpdump processes completed."
 
 # ========================
 # COPY PCAPS TO HOST DIR

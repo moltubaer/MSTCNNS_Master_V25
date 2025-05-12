@@ -53,13 +53,12 @@ echo "[*] UE count set to $ue_count."
 # ========================
 
 echo "[*] Running script on $core1..."
-# ssh -tt "$core1" "sudo bash $core1_script $DURATION" &
 ssh -tt "$core1" "sudo bash $core1_script --duration $duration --ue-count $ue_count" &
 ssh -tt "$core1" "sudo python3 $system_script -d $duration" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
-ssh -tt "$ueransim" "sudo bash $ueransim_script --duration $duration --ue-count ue_count" &
+ssh -tt "$ueransim" "sudo bash $ueransim_script --duration $duration --ue-count $ue_count" &
 ssh -tt "$ueransim" "sudo python3 $system_script -d $duration" &
 PID2=$!
 

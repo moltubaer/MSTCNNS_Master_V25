@@ -5,7 +5,7 @@
 # ===
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 
 # Parse arguments
@@ -45,12 +45,10 @@ containers=("free5gc_amf" "free5gc_smf" "free5gc_upf" "free5gc_udm" "free5gc_aus
 container_interface="any"
 host_interface="any"
 
-# Default to 5 seconds if not provided
-duration=${1:-5}
-
 # Host output directory for collected pcaps
-host_output_dir="/home/ubuntu/pcap_captures/$(date +%Y.%m.%d_%H.%M)_free5gc"
-mkdir -p "$host_output_dir"
+timestamp=$(date +%Y.%m.%d_%H.%M.%S)
+host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-free5gc-${timestamp}"
+mkdir -p "$host_output_dir/logs"
 
 # ========================
 # HOST OS CAPTURE
@@ -135,7 +133,7 @@ echo "[*] All tcpdump processes completed."
 # COPY PCAPS TO HOST DIR
 # ========================
 
-# echo "[*] Copying container .pcap files to host: $host_output_dir"
+echo "[*] Copying container .pcap files to host: $host_output_dir"
 
 for container in "${containers[@]}"; do
     src_path="/tmp/${container}_capture.pcap"
