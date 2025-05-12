@@ -5,7 +5,7 @@
 # ===
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 
 # Parse arguments
@@ -28,7 +28,7 @@ done
 
 # Validate UE count
 if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
-    echo "[ERROR] Invalid UE count: $ue_count. It must be a positive integer."
+    echo "open5gs [ERROR] Invalid UE count: $ue_count. It must be a positive integer."
     exit 1
 fi
 
@@ -44,9 +44,6 @@ containers=("open5gs_amf" "open5gs_smf" "open5gs_upf" "open5gs_udr" "open5gs_aus
 
 container_interface="any"
 host_interface="any"
-
-# Default to 5 seconds if not provided
-duration=${1:-5}
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
@@ -119,6 +116,11 @@ if ! wait "$host_pid"; then
         failed_pids+=("$host_pid")  # Track the failed PID
     fi
 fi
+# echo "[*] Waiting for all tcpdump processes to complete..."
+# ! may cause an error this, but still pushes it
+wait "${container_pids[@]}"
+wait "$host_pid"
+echo "[*] All tcpdump processes completed."
 
 # ========================
 # COPY PCAPS TO HOST DIR
