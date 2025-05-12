@@ -71,17 +71,20 @@ if ! [[ "$MEAN_DELAY" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
   exit 1
 fi
 
-# Calculate the duration for aether_capture.sh
+# Calculate the duration for the capture scripts
 BUFFER_TIME=30  # Additional buffer time (in seconds)
+
+# Remove the .py extension from the test script name for descriptive filenames
+TEST_SCRIPT_NAME=$(basename "$TEST_SCRIPT" .py)
 
 # Total duration = (UE_COUNT * MEAN_DELAY + BUFFER_TIME)
 CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
 CAPTURE_DURATION=${CAPTURE_DURATION%.*}  # Convert to integer
 echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
 
-# Start capture script on the core machine
+# Start the core capture script
 echo "[*] Starting capture script on the $CORE core machine for $CAPTURE_DURATION seconds..."
-ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT > /tmp/capture.log 2>&1" &
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT --test-script-name $TEST_SCRIPT_NAME --mode $MODE > /tmp/capture.log 2>&1" &
 capture_pid=$!  # Capture the PID of the capture process
 
 # Wait for a short delay to ensure the capture script starts
@@ -92,9 +95,6 @@ sleep 5
 echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
 ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
-
-# Strip .py extension from the test script name for descriptive filenames
-TEST_SCRIPT_NAME=$(basename "$TEST_SCRIPT" .py)
 
 # Start the UERANSIM capture script
 echo "[*] Starting UERANSIM capture script..."
@@ -115,8 +115,6 @@ echo "[✓] UERANSIM capture script completed."
 # Cleanup remote processes
 echo "[*] Cleaning up remote processes..."
 echo " [+] Killing tcpdump on $CORE"
-# ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "pkill nr-ue; pkill nr-gnb" > /dev/null 2>&1 # !maybe not do this
-ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "pkill tcpdump" > /dev/null 2>&1
-# echo "[✓] Cleanup completed."
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "sudo pkill tcpdump" > /dev/null 2>&1
 
 echo "[✓] Workflow completed successfully."

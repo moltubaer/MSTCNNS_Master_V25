@@ -5,8 +5,10 @@
 # ===
 
 # Default values
-duration=5
+duration=120
 ue_count=100
+test_script_name="default_test"
+mode="default_mode"
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -17,6 +19,14 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --ue-count)
             ue_count="$2"
+            shift 2
+            ;;
+        --test-script-name)
+            test_script_name="$2"
+            shift 2
+            ;;
+        --mode)
+            mode="$2"
             shift 2
             ;;
         *)
@@ -34,6 +44,8 @@ fi
 
 echo "[*] Capture duration set to $duration seconds."
 echo "[*] UE count set to $ue_count."
+echo "[*] Test script name set to $test_script_name."
+echo "[*] Mode set to $mode."
 
 # ========================
 # CONFIGURATION
@@ -47,7 +59,8 @@ host_interface="any"
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
-host_output_dir="/home/ubuntu/pcap_captures/${ue_count}-free5gc-${timestamp}"
+host_output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_free5gc_${timestamp}"
+host_pcap_path="$host_output_dir/${ue_count}_${mode}_${test_script_name}_host_capture.pcap"
 mkdir -p "$host_output_dir/logs"
 
 # ========================
@@ -56,7 +69,6 @@ mkdir -p "$host_output_dir/logs"
 
 echo "[*] Starting tcpdump on host interface: $host_interface"
 
-host_pcap_path="$host_output_dir/host_capture.pcap"
 sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/logs/host_tcpdump.log" 2>&1 &
 host_pid=$!
 
