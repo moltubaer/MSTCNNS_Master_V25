@@ -9,13 +9,16 @@ import argparse
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
-parser.add_argument("--count", "-c", type=str, help="Name of pattern to use (e.g. udm, ausf, pcf)")
+parser.add_argument("--name", "-n", required=True, type=str)
+parser.add_argument("--input", "-i", type=str, help="Input directory")
+parser.add_argument("--output", "-o", default=".csv", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-path = "../data/core_pdu_est/"
-input_file = f"amf_pdu_est{args.count}"
-output_csv = f"csv/{input_file}.csv"
+# path = "../data/linear/open5gs/pdu_est"
+path = args.input
+input_file = args.name  # 100.amf.pdu_est.pdml
+output_csv = f"{args.output}/{input_file}.csv"
 
 # === Constants ===
 FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport

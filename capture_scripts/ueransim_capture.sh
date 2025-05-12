@@ -4,6 +4,9 @@
 # Argument Parsing
 # ===
 
+# Default to 5 seconds if not provided
+# duration=${1:-5}
+
 # Default values
 duration=120
 ue_count=100
@@ -84,7 +87,7 @@ echo "[+] Capture complete."
 # POST-CAPTURE TASKS
 # ===
 
-echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
+# echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
 sudo chown -R ubuntu:ubuntu "$output_dir"
 
 echo "[✓] .pcap file saved to $host_capture"

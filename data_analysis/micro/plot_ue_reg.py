@@ -93,11 +93,11 @@ def write_data_csv(nf_data, csv_output_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot NF processing time grouped by UE count.")
-    parser.add_argument("--input-dir", default="./parsed_csv", help="Directory containing parsed CSV files from NFs.")
-    parser.add_argument("--output", default="nf_vs_total_duration.png", help="Path to save the output plot.")
-    parser.add_argument("--csv-output", default="nf_processing_data.csv", help="Path to save the output CSV.")
+    parser.add_argument("--input", default="./parsed_csv", help="Directory containing parsed CSV files from NFs.")
+    parser.add_argument("--output", default="./plots", help="Path to save the output plot.")
+    parser.add_argument("--name", required=True, type=str)
     args = parser.parse_args()
 
-    data = collect_nf_data_by_ue_count(args.input_dir)
-    plot_stacked_nf_bars(data, args.output)
-    write_data_csv(data, args.csv_output)
+    data = collect_nf_data_by_ue_count(args.input)
+    plot_stacked_nf_bars(data, f'{args.output}/{args.name}.png')
+    write_data_csv(data, f'{args.output}/{args.name}.csv')

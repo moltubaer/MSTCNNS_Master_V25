@@ -96,12 +96,15 @@ def write_percentiles_csv(core_data, output_path_csv):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Plot CDFs of delta_ms values from parsed CSVs.")
-    parser.add_argument("--dir", default="./parsed_csv")
-    parser.add_argument("--mode", choices=["auto", "core"], default="auto",)
+    parser.add_argument("--input", "-i", default="./parsed_csv", type=str)
+    parser.add_argument("--mode", "-m", choices=["auto", "core"], default="auto", type=str)
+    parser.add_argument("--output", "-o", default="./plots", type=str)
+    parser.add_argument("--name", "-n", required=True, type=str)
     args = parser.parse_args()
 
-    name = "AETHER UERANSIM - UE Deregistration"
-    output_basename = "aether_ue_dereg_cdf"
-    output_path = "./plots"
+    name = "Open5GS UERANSIM - UE Deregistration"
+    # output_basename = "open5gs_ue_dereg_cdf"
+    output_basename = args.name
+    output_path = args.output
 
-    main(args.dir, args.mode)
+    main(args.input, args.mode)
