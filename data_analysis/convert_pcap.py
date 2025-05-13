@@ -4,7 +4,6 @@ import subprocess
 # To delete all JSON and PDML file recursively:
 #   find /mnt/c/Dev/master/pcap_captures -type f \( -name "*.json" -o -name "*.pdml" \) -delete
 
-
 def extract_nf(file_name: str) -> str:
     for nf in ["amf", "ausf", "udm", "smf", "pcf", "nrf", "bsf", "scp", "nssf", "udr", "upf"]:
         if f"_{nf}_" in file_name.lower():
@@ -36,11 +35,9 @@ def convert_pcap_recursive(root_dir: str):
                 tshark_format = "json"
                 display_filter = "tcp"
 
-            # Build output filename dynamically
-            parent_dir = os.path.basename(dirpath)
-            grandparent_dir = os.path.basename(os.path.dirname(dirpath))
-            ue_count = extract_ue_count(parent_dir)
-            output_filename = f"{nf}.{grandparent_dir}{ue_count}{output_ext}"
+            # Use the input filename (without .pcap) as the base
+            base_filename = os.path.splitext(file)[0]
+            output_filename = f"{base_filename}{output_ext}"
             output_path = os.path.join(dirpath, output_filename)
 
             tshark_cmd = [
@@ -75,5 +72,5 @@ def convert_pcap_recursive(root_dir: str):
                 print(f"[FAIL] {input_path}: {e}")
 
 if __name__ == "__main__":
-    root = "/mnt/c/Dev/master/pcap_captures/07.05_linear"  # Set your root dir
+    root = "/mnt/c/Dev/master/pcap_captures/test"  # Set your root dir
     convert_pcap_recursive(root)
