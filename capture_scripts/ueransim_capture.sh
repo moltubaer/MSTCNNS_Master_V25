@@ -12,6 +12,7 @@ duration=5
 ue_count=1
 mode=""
 test_script=""
+core=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -30,6 +31,10 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --test)
             test_script="$2"
+            shift 2
+            ;;
+        --core)
+            core="$2"
             shift 2
             ;;
         *)
@@ -57,7 +62,7 @@ echo "[*] Test script set to $test_script."
 host_interface="enp2s0"
 
 timestamp=$(date +%Y.%m.%d_%H.%M)
-output_dir="/home/ubuntu/pcap_captures/${ue_count}_ueransim_${timestamp}"
+output_dir="/home/ubuntu/pcap_captures/${ue_count}_ueransim_{core}_${timestamp}"
 mkdir -p "$output_dir"
 
 pids=()
