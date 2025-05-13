@@ -92,8 +92,8 @@ ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTU
 capture_pid=$!  # Capture the PID of the capture process
 
 # Wait for a short delay to ensure the capture script starts
-echo "[*] Waiting for 5 seconds to ensure capture starts..."
-sleep 5
+echo "[*] Waiting for 10 seconds to ensure capture starts..."
+sleep 10
 
 # Start the selected test script on the UERANSIM machine
 echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
