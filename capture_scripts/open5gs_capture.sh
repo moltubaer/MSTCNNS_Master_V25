@@ -1,11 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # ===
 # Argument Parsing
 # ===
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 test_script_name="default_test"
 mode="default_mode"
@@ -42,126 +43,83 @@ if ! [[ "$ue_count" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-echo "[*] Capture duration set to $duration seconds."
+echo "⏱️  Capture duration: ${duration}s"
 echo "[*] UE count set to $ue_count."
 echo "[*] Test script name set to $test_script_name."
 echo "[*] Mode set to $mode."
 
-# ========================
+# ===
 # CONFIGURATION
-# ========================
+# ===
 
-# List of Open5GS containers to capture from
-containers=("open5gs_amf" "open5gs_smf" "open5gs_upf" "open5gs_udr" "open5gs_ausf" "open5gs_bsf" "open5gs_pcf" "open5gs_udm" "open5gs_nssf" "open5gs_nrf" "open5gs_scp")
+# Containers to monitor
+containers=(
+    open5gs_amf open5gs_smf open5gs_upf open5gs_udr
+    open5gs_ausf open5gs_bsf open5gs_pcf open5gs_udm
+    open5gs_nssf open5gs_nrf open5gs_scp
+)
 
-container_interface="eth0"
-host_interface="enp2s0"
-
-# Host output directory for collected pcaps
+# Output directory for pcap files
 timestamp=$(date +%Y.%m.%d_%H.%M)
-host_output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_open5gs_${timestamp}"
-mkdir -p "$host_output_dir/logs"
+output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_open5gs_${timestamp}"
+mkdir -p "$output_dir"
 
-# ========================
-# HOST OS CAPTURE
-# ========================
+declare -a pids
 
-echo "[*] Starting tcpdump on host interface: $host_interface"
-
-host_pcap_path="$host_output_dir/${ue_count}_${mode}_${test_script_name}_host_capture.pcap"
-sudo timeout "$duration" tcpdump -i "$host_interface" -w "$host_pcap_path" > "$host_output_dir/logs/host_tcpdump.log" 2>&1 &
-host_pid=$!
-
-if [ -z "$host_pid" ]; then
-    echo "[ERROR] Failed to start tcpdump on host interface. Exiting."
-    exit 1
-fi
-
-# ========================
-# CONTAINER CAPTURES
-# ========================
-
-echo "[*] Starting tcpdump in containers..."
-
-container_pids=()
+# ===
+# START CAPTURE
+# ===
 
 for container in "${containers[@]}"; do
-    echo "  [+] $container capturing on interface '$container_interface' for $duration seconds"
+    echo "📡 Processing: $container"
 
-    docker exec "$container" \
-        sh -c "timeout $duration tcpdump -i $container_interface -w /tmp/${container}_capture.pcap" > "$host_output_dir/logs/${container}_tcpdump.log" 2>&1 &
-    container_pids+=($!)
-done
-
-# ========================
-# WAIT FOR ALL CAPTURES
-# ========================
-
-echo "[*] Waiting for all tcpdump processes to complete..."
-
-# Track failures
-failed_pids=()
-
-# Wait for all container capture processes
-for pid in "${container_pids[@]}"; do
-    wait "$pid"
-    exit_code=$?
-    if [ $exit_code -eq 0 ]; then
-        echo "[INFO] Container capture process (PID: $pid) completed successfully."
-    elif [ $exit_code -eq 124 ]; then
-        echo "[INFO] Container capture process (PID: $pid) was terminated by timeout. Treating as success."
-    else
-        echo "[ERROR] A container capture process (PID: $pid) failed with exit code $exit_code. Check the corresponding log file for details."
-        failed_pids+=("$pid")  # Track the failed PID
-    fi
-done
-
-# Wait for the host capture process
-if ! wait "$host_pid"; then
-    exit_code=$?
-    if [ $exit_code -eq 0 ]; then
-        echo "[INFO] Host capture process (PID: $host_pid) completed successfully."
-    elif [ $exit_code -eq 124 ]; then
-        echo "[INFO] Host capture process (PID: $host_pid) was terminated by timeout. Treating as success."
-    else
-        echo "[ERROR] Host capture process (PID: $host_pid) failed with exit code $exit_code. Check $host_output_dir/logs/host_tcpdump.log for details."
-        failed_pids+=("$host_pid")  # Track the failed PID
-    fi
-fi
-# echo "[*] Waiting for all tcpdump processes to complete..."
-# ! may cause an error this, but still pushes it
-wait "${container_pids[@]}"
-wait "$host_pid"
-echo "[*] All tcpdump processes completed."
-
-# ========================
-# COPY PCAPS TO HOST DIR
-# ========================
-
-echo "[*] Copying container .pcap files to host: $host_output_dir"
-
-for container in "${containers[@]}"; do
-    src_path="/tmp/${container}_capture.pcap"
-    dest_path="$host_output_dir/${container}_capture.pcap"
-
-    echo "  [+] Copying from $container:$src_path"
-    docker cp "$container:$src_path" "$dest_path" > "$host_output_dir/logs/${container}_copy.log" 2>&1
-
-    if [ $? -eq 0 ]; then
-        echo "  [INFO] Successfully copied $container:$src_path to $dest_path"
-    else
-        echo "  [ERROR] Failed to copy $container:$src_path. Check $host_output_dir/logs/${container}_copy.log for details."
+    # Ensure container is running
+    if [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != "true" ]]; then
+        echo "  ⚠️  $container is not running. Skipping."
+        continue
     fi
 
-    # Clean up inside the container
-    docker exec "$container" rm -f "$src_path" > /dev/null 2>&1
+    # Get container PID
+    pid=$(docker inspect -f '{{.State.Pid}}' "$container")
+    echo "  🔍 PID = $pid"
+
+    # Get iflink inside container
+    iflink=$(docker exec "$container" cat /sys/class/net/eth0/iflink)
+    echo "  🔗 iflink = $iflink"
+
+    # Find host veth interface
+    veth_path=$(grep -l "^${iflink}$" /sys/class/net/veth*/ifindex || true)
+    if [[ -z "$veth_path" ]]; then
+        echo "  ⚠️  No veth@ifindex=$iflink on host. Skipping."
+        continue
+    fi
+    veth_iface=$(basename "$(dirname "$veth_path")")
+    echo "  ✅ Host veth = $veth_iface"
+
+    # Start tcpdump
+    pcap_file="$output_dir/${container}.pcap"
+    echo "  📝 Writing to $pcap_file"
+    sudo tcpdump -i "$veth_iface" -n -w "$pcap_file" > "$output_dir/${container}_tcpdump.log" 2>&1 &
+    pids+=("$!")
 done
 
-# ========================
+# ===
+# WAIT FOR CAPTURE TO COMPLETE
+# ===
+
+echo "⏳ Capturing traffic for ${duration}s..."
+sleep "$duration"
+
+echo "⏹️  Stopping tcpdump processes..."
+for pid in "${pids[@]}"; do
+    sudo kill "$pid" || true
+done
+
+# ===
 # SET FILE OWNERSHIP
-# ========================
+# ===
 
 echo "[*] Changing ownership of output directory and files to ubuntu:ubuntu"
-sudo chown -R ubuntu:ubuntu "$host_output_dir"
+sudo chown -R ubuntu:ubuntu "$output_dir"
 
-echo "[✓] PCAP collection complete: $host_output_dir"
+echo "🎉 Done! Captures saved in $output_dir"
