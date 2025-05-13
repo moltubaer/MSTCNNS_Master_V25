@@ -102,7 +102,15 @@ if __name__ == "__main__":
     parser.add_argument("--name", "-n", required=True, type=str)
     args = parser.parse_args()
 
-    name = "Open5GS UERANSIM - UE Deregistration"
+    core = "Open5GS"
+    # core = "Free5GC"
+    
+    operation = "UE Registration"
+    # operation = "UE Deregistration"
+    # operation = "PDU Session Establishment"
+    # operation = "PDU Session Release"
+    
+    name = f'{core} - {operation}'
     # output_basename = "open5gs_ue_dereg_cdf"
     output_basename = args.name
     output_path = args.output
