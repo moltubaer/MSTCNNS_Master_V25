@@ -26,7 +26,7 @@ def convert_pcap_recursive(root_dir: str):
 
             # Choose output format and filter
             nf = extract_nf(file)
-            if nf in ["amf", "ueransim"]:
+            if nf in ["ueransim"]:
                 output_ext = ".pdml"
                 tshark_format = "pdml"
                 display_filter = "ngap"
