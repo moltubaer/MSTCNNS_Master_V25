@@ -6,7 +6,7 @@ set -euo pipefail
 # ===
 
 # Default values
-duration=120
+duration=5
 ue_count=100
 test_script_name="default_test"
 mode="default_mode"
