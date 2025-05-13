@@ -106,7 +106,8 @@ for ran_id, packet_list in packets_by_id.items():
     for frame_number, timestamp, procedure_code, pdu_type, direction in sorted(packet_list):
         if procedure_code == first_code and pdu_type == "initiating" and not first:
             first = (frame_number, timestamp, direction)
-        elif procedure_code == release_code and pdu_type == "initiating":
+        elif procedure_code == release_code and pdu_type in ("initiating", "successful"):
+        # elif procedure_code == release_code and pdu_type == "initiating":
             release = (frame_number, timestamp, direction)
 
     if first:
