@@ -70,6 +70,9 @@ declare -a pids
 # START CAPTURE
 # ===
 
+# Start metrics capture in the background
+python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration "$duration" &
+
 for container in "${containers[@]}"; do
     echo "📡 Processing: $container"
 
