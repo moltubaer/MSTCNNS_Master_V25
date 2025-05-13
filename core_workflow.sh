@@ -57,7 +57,7 @@ fi
 source "$CONFIG_FILE"
 
 # Validate the test script
-if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_sessions.py" && "$TEST_SCRIPT" != "ue_dereg.py" ]]; then
+if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_sessions.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_release.py" ]]; then
   echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_sessions.py, ue_dereg.py."
   exit 1
 fi
@@ -75,7 +75,7 @@ if ! [[ "$MEAN_DELAY" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
 fi
 
 # Calculate the duration for the capture scripts
-BUFFER_TIME=30  # Additional buffer time (in seconds)
+BUFFER_TIME=$DURATION  # Additional buffer time (in seconds)
 
 # Remove the .py extension from the test script name for descriptive filenames
 TEST_SCRIPT_NAME=$(basename "$TEST_SCRIPT" .py)
