@@ -76,7 +76,7 @@ echo "[*] Starting metrics capture for $duration seconds..."
 python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration "$duration" &
 
 # Start tcpdump on host
-host_capture="$output_dir/${ue_count}_${mode}_${test_script}_ueransim_capture_${timestamp}.pcap"
+host_capture="$output_dir/${ue_count}_${mode}_${test_script}_ueransim_capture.pcap"
 echo "[+] Starting tcpdump on host interface: $host_interface"
 sudo timeout "$duration" tcpdump -tttt -i "$host_interface" -w "$host_capture" > "$output_dir/ueransim_tcpdump.log" 2>&1 &
 pids+=($!)
