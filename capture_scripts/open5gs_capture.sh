@@ -54,8 +54,8 @@ echo "[*] Mode set to $mode."
 # List of Open5GS containers to capture from
 containers=("open5gs_amf" "open5gs_smf" "open5gs_upf" "open5gs_udr" "open5gs_ausf" "open5gs_bsf" "open5gs_pcf" "open5gs_udm" "open5gs_nssf" "open5gs_nrf" "open5gs_scp")
 
-container_interface="any"
-host_interface="any"
+container_interface="eth0"
+host_interface="enp2s0"
 
 # Host output directory for collected pcaps
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)

@@ -114,9 +114,8 @@ fi
 # GET READY
 # ===
 
-# Interface for pod, any to capture all
-pod_interface="any"
-host_interface="any"
+pod_interface="eth0"
+host_interface="enp2s0"
 
 timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 host_output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_aether_${timestamp}"
