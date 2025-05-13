@@ -58,7 +58,7 @@ ssh -tt "$core1" "sudo python3 $system_script -d $duration" &
 PID1=$!
 
 echo "[*] Running script on $ueransim..."
-ssh -tt "$ueransim" "sudo bash $ueransim_script --duration $duration --ue-count $ue_count" &
+ssh -tt "$ueransim" "sudo bash $ueransim_script --duration $duration --ue-count $ue_count --core free5gc" &
 ssh -tt "$ueransim" "sudo python3 $system_script -d $duration" &
 PID2=$!
 
