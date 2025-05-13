@@ -58,7 +58,7 @@ container_interface="eth0"
 host_interface="enp2s0"
 
 # Host output directory for collected pcaps
-timestamp=$(date +%Y.%m.%d_%H.%M.%S)
+timestamp=$(date +%Y.%m.%d_%H.%M)
 host_output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_free5gc_${timestamp}"
 host_pcap_path="$host_output_dir/${ue_count}_${mode}_${test_script_name}_host_capture.pcap"
 mkdir -p "$host_output_dir/logs"

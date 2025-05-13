@@ -9,9 +9,9 @@
 
 # Default values
 duration=5
-ue_count=100
-mode="linear"
-test_script="run_ues.py"
+ue_count=1
+mode=""
+test_script=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -54,11 +54,12 @@ echo "[*] Test script set to $test_script."
 # CONFIGURATION
 # ===
 
-host_interface="any"
-output_dir="/home/ubuntu/pcap_captures"
+host_interface="enp2s0"
+
+timestamp=$(date +%Y.%m.%d_%H.%M)
+output_dir="/home/ubuntu/pcap_captures/${ue_count}_ueransim_${timestamp}"
 mkdir -p "$output_dir"
 
-timestamp=$(date +%Y.%m.%d_%H.%M.%S)
 pids=()
 
 # ===
