@@ -2,7 +2,7 @@
 
 # Usage: ./core_workflow.sh -e [aether|open5gs|free5gc] --duration [seconds] --count [number_of_ues] --test [test_script] --mode [linear|exponential] --mean-delay [seconds]
 
-CONFIG_DIR="./cores_config"
+CONFIG_DIR="./core_config"
 CONFIG_FILE=""
 DURATION=120  # Default duration
 UE_COUNT=100  # Default number of UEs
