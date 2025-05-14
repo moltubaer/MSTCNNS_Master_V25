@@ -92,6 +92,15 @@ def convert_pcap_recursive(root_dir: str):
             except Exception as e:
                 print(f"[FAIL] {input_path}: {e}")
 
+
+
 if __name__ == "__main__":
-    root = "/mnt/c/Dev/master/pcap_captures/test"  # Set your root dir
-    convert_pcap_recursive(root)
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Recursively convert .pcap files to JSON or PDML.")
+    parser.add_argument("--input", "-i", required=True, help="Root directory containing .pcap files")
+    args = parser.parse_args()
+    # /mnt/c/Dev/master/pcap_captures/aether
+
+    convert_pcap_recursive(args.input)
+
