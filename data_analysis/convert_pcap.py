@@ -2,13 +2,14 @@ import os
 import subprocess
 
 # To delete all JSON and PDML file recursively:
-#   find /mnt/c/Dev/master/pcap_captures -type f \( -name "*.json" -o -name "*.pdml" \) -delete
+#   find /mnt/c/Dev/master/pcap_captures/test -type f \( -name "*.json" -o -name "*.pdml" \) -delete
 
 def extract_nf(file_name: str) -> str:
+    name = file_name.lower()
     for nf in ["amf", "ausf", "udm", "smf", "pcf", "nrf", "bsf", "scp", "nssf", "udr", "upf"]:
-        if f"_{nf}_" in file_name.lower():
+        if f"_{nf}_" in name or name.startswith(f"{nf}_") or name.endswith(f"_{nf}") or f"-{nf}-" in name or f"-{nf}_" in name or f"_{nf}-" in name or name.startswith(f"{nf}-"):
             return nf
-    if "ueransim" in file_name.lower():
+    if "ueransim" in name:
         return "ueransim"
     return "unknown"
 
@@ -23,31 +24,36 @@ def convert_pcap_recursive(root_dir: str):
                 continue
 
             input_path = os.path.join(dirpath, file)
+            base_filename = os.path.splitext(file)[0]
 
-            # Choose output format and filter
-            nf = extract_nf(file)
-            if nf in ["ueransim"]:
+            # Check if it's a ueransim capture
+            is_ueransim = "ueransim" in file.lower()
+
+            target_subdir_name = os.path.basename(dirpath)  # Use parent folder name in all cases
+
+            if is_ueransim:
                 output_ext = ".pdml"
                 tshark_format = "pdml"
                 display_filter = "ngap"
+                subfolder = "pdml"
             else:
                 output_ext = ".json"
                 tshark_format = "json"
                 display_filter = "tcp"
+                subfolder = "json"
 
-            # Determine output directory (one level above input .pcap)
-            parent_dir = os.path.dirname(dirpath)
-            output_subdir = "pdml" if output_ext == ".pdml" else "json"
-            output_dir = os.path.join(parent_dir, output_subdir)
-
-            # Ensure the output directory exists
-            os.makedirs(output_dir, exist_ok=True)
-
-            # Construct output file path
-            base_filename = os.path.splitext(file)[0]
             output_filename = f"{base_filename}{output_ext}"
-            output_path = os.path.join(output_dir, output_filename)
 
+            # Path 1: Save next to original pcap
+            same_dir_output = os.path.join(dirpath, output_filename)
+
+            # Path 2: Save one level up, in named subfolder
+            parent_dir = os.path.dirname(dirpath)
+            target_dir = os.path.join(parent_dir, subfolder, target_subdir_name)
+            os.makedirs(target_dir, exist_ok=True)
+            one_up_output = os.path.join(target_dir, output_filename)
+
+            # Run tshark
             tshark_cmd = [
                 "tshark",
                 "-r", input_path,
@@ -56,25 +62,32 @@ def convert_pcap_recursive(root_dir: str):
             ]
 
             try:
-                with open(output_path, "w") as out_file:
-                    result = subprocess.run(
-                        tshark_cmd,
-                        stdout=out_file,
-                        stderr=subprocess.PIPE,
-                        text=True
-                    )
+                result = subprocess.run(
+                    tshark_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
 
-                    stderr = result.stderr.strip()
-                    if stderr:
-                        if "network type" in stderr or "doesn't support" in stderr:
-                            print(f"[SKIP] Unsupported format: {input_path}")
-                            os.remove(output_path) if os.path.exists(output_path) else None
-                        elif "Running as user" in stderr:
-                            print(f"[OK] Converted with root warning: {input_path} -> {output_filename}")
-                        else:
-                            print(f"[ERROR] {input_path}: {stderr}")
+                stderr = result.stderr.strip()
+                output_data = result.stdout
+
+                if stderr:
+                    if "network type" in stderr or "doesn't support" in stderr:
+                        print(f"[SKIP] Unsupported format: {input_path}")
+                        continue
+                    elif "Running as user" in stderr:
+                        print(f"[OK] Converted with root warning: {input_path}")
                     else:
-                        print(f"[OK] Converted: {input_path} -> {output_filename}")
+                        print(f"[ERROR] {input_path}: {stderr}")
+                        continue
+                else:
+                    print(f"[OK] Converted: {input_path} -> {output_filename}")
+
+                # Save to both locations
+                with open(same_dir_output, "w") as f1, open(one_up_output, "w") as f2:
+                    f1.write(output_data)
+                    f2.write(output_data)
 
             except Exception as e:
                 print(f"[FAIL] {input_path}: {e}")
