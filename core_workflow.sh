@@ -44,9 +44,6 @@ while [[ "$#" -gt 0 ]]; do
   esac
 done
 
-# Debug: Print the value of TEST_SCRIPT
-echo "[DEBUG] TEST_SCRIPT is set to: $TEST_SCRIPT"
-
 # Ensure config file was specified and exists
 if [ -z "$CONFIG_FILE" ] || [ ! -f "$CONFIG_FILE" ]; then
   echo "Error: Config file not found. Use -e [aether|open5gs|free5gc] and ensure it exists in '$CONFIG_DIR'."
@@ -57,7 +54,7 @@ fi
 source "$CONFIG_FILE"
 
 # Validate the test script
-if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_sessions.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_release.py" ]]; then
+if [[ "$TEST_SCRIPT" != "ue_reg.py" && "$TEST_SCRIPT" != "pdu_est.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_rel.py" ]]; then
   echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_sessions.py, ue_dereg.py."
   exit 1
 fi
@@ -79,7 +76,6 @@ BUFFER_TIME=$DURATION  # Additional buffer time (in seconds)
 
 # Remove the .py extension from the test script name for descriptive filenames
 TEST_SCRIPT_NAME=$(basename "$TEST_SCRIPT" .py)
-echo "The test script name is: $TEST_SCRIPT_NAME"
 
 # Total duration = (UE_COUNT * MEAN_DELAY + BUFFER_TIME)
 CAPTURE_DURATION=$(echo "$UE_COUNT * $MEAN_DELAY + $BUFFER_TIME" | bc)
@@ -91,6 +87,10 @@ echo "[*] Starting capture script on the $CORE core machine for $CAPTURE_DURATIO
 ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT --test-script-name $TEST_SCRIPT_NAME --mode $MODE > /tmp/capture.log 2>&1" &
 capture_pid=$!  # Capture the PID of the capture process
 
+# Start the UERANSIM capture script
+echo "[*] Starting UERANSIM capture script..."
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh --duration $CAPTURE_DURATION --ue-count $UE_COUNT --mode $MODE --test $TEST_SCRIPT_NAME --core $CORE > /tmp/ueransim_capture.log 2>&1" &
+ueransim_capture_pid=$!  # Capture the PID of the UERANSIM capture process
 # Wait for a short delay to ensure the capture script starts
 echo "[*] Waiting for 10 seconds to ensure capture starts..."
 sleep 10
@@ -100,13 +100,40 @@ echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
 ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
-# Start the UERANSIM capture script
-echo "[*] Starting UERANSIM capture script..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh --duration $CAPTURE_DURATION --ue-count $UE_COUNT --mode $MODE --test $TEST_SCRIPT_NAME > /tmp/ueransim_capture.log 2>&1" &
-ueransim_capture_pid=$!  # Capture the PID of the UERANSIM capture process
 
 # Wait for all processes to complete
 echo "[*] Waiting for all processes to complete..."
+
+# ====
+# PROGRESS BAR
+# ====
+
+dur=$DURATION
+
+# get full terminal width
+cols=$(tput cols)
+# reserve space for brackets, percentage and a space
+bar_width=$(( cols - 8 ))
+
+for (( elapsed=1; elapsed<=dur; elapsed++ )); do
+  sleep 1
+
+  percent=$(( elapsed * 100 / dur ))
+
+  hashes=$(( elapsed * bar_width / dur ))
+  spaces=$(( bar_width - hashes ))
+
+  bar_hashes=$(printf '%*s' "$hashes" '' | tr ' ' '#')
+  bar_spaces=$(printf '%*s' "$spaces" '')
+
+  printf "\r[%s%s] %3d%%" "$bar_hashes" "$bar_spaces" "$percent"
+done
+
+printf "\n"
+
+
+
+
 wait "$capture_pid"
 echo "[✓] Capture script on the $CORE core machine completed."
 
