@@ -35,10 +35,18 @@ def convert_pcap_recursive(root_dir: str):
                 tshark_format = "json"
                 display_filter = "tcp"
 
-            # Use the input filename (without .pcap) as the base
+            # Determine output directory (one level above input .pcap)
+            parent_dir = os.path.dirname(dirpath)
+            output_subdir = "pdml" if output_ext == ".pdml" else "json"
+            output_dir = os.path.join(parent_dir, output_subdir)
+
+            # Ensure the output directory exists
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Construct output file path
             base_filename = os.path.splitext(file)[0]
             output_filename = f"{base_filename}{output_ext}"
-            output_path = os.path.join(dirpath, output_filename)
+            output_path = os.path.join(output_dir, output_filename)
 
             tshark_cmd = [
                 "tshark",
