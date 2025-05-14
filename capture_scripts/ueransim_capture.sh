@@ -62,7 +62,9 @@ echo "[*] Test script set to $test_script."
 host_interface="enp2s0"
 
 timestamp=$(date +%Y.%m.%d_%H.%M)
-output_dir="/home/ubuntu/pcap_captures/${ue_count}_UEs_ueransim_${core}_${test_script}_${mode}_${timestamp}"
+current_date=$(date +%d.%m.%Y)
+
+output_dir="/home/ubuntu/pcap_captures/${core}_${current_date}_captures/${ue_count}_UEs_ueransim_${core}_${test_script}_${mode}_${timestamp}"
 mkdir -p "$output_dir"
 
 pids=()
