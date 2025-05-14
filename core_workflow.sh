@@ -54,7 +54,7 @@ fi
 source "$CONFIG_FILE"
 
 # Validate the test script
-if [[ "$TEST_SCRIPT" != "run_ues.py" && "$TEST_SCRIPT" != "pdu_sessions.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_release.py" ]]; then
+if [[ "$TEST_SCRIPT" != "ue_reg.py" && "$TEST_SCRIPT" != "pdu_est.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_rel.py" ]]; then
   echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_sessions.py, ue_dereg.py."
   exit 1
 fi
@@ -103,6 +103,37 @@ ues_pid=$!  # Capture the PID of the UERANSIM process
 
 # Wait for all processes to complete
 echo "[*] Waiting for all processes to complete..."
+
+# ====
+# PROGRESS BAR
+# ====
+
+dur=$DURATION
+
+# get full terminal width
+cols=$(tput cols)
+# reserve space for brackets, percentage and a space
+bar_width=$(( cols - 8 ))
+
+for (( elapsed=1; elapsed<=dur; elapsed++ )); do
+  sleep 1
+
+  percent=$(( elapsed * 100 / dur ))
+
+  hashes=$(( elapsed * bar_width / dur ))
+  spaces=$(( bar_width - hashes ))
+
+  bar_hashes=$(printf '%*s' "$hashes" '' | tr ' ' '#')
+  bar_spaces=$(printf '%*s' "$spaces" '')
+
+  printf "\r[%s%s] %3d%%" "$bar_hashes" "$bar_spaces" "$percent"
+done
+
+printf "\n"
+
+
+
+
 wait "$capture_pid"
 echo "[✓] Capture script on the $CORE core machine completed."
 
