@@ -45,11 +45,11 @@ uacAcc:
   class15: false
 
 # Initial PDU sessions to be established
-# sessions:
-#   - type: 'IPv4'
-#     apn: 'internet'
-#     slice:
-#       sst: 1
+sessions:
+  - type: 'IPv4'
+    apn: 'internet'
+    slice:
+      sst: 1
 
 # Configured NSSAI for this UE by HPLMN
 configured-nssai:
