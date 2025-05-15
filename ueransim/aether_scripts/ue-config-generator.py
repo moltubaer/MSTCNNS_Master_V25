@@ -23,7 +23,7 @@ def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_inde
 # Example usage
 generate_open5gs_ue_configs(
     template_path='../config/aether-ue.yaml',
-    output_dir='/home/ubuntu/UERANSIM/config/tests',
+    output_dir='/home/ubuntu/UERANSIM/config/tests-ue-with-pdu',
     start_index=1,
     end_index=10,
     base_imi_str="208930100006001"
