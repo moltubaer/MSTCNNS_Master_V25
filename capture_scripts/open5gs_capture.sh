@@ -63,7 +63,7 @@ containers=(
 timestamp=$(date +%Y.%m.%d_%H.%M)
 current_date=$(date +%d.%m.%Y)
 
-output_dir="/home/ubuntu/pcap_captures/${core}_${current_date}_captures/${ue_count}_${mode}_${test_script_name}_open5gs_${timestamp}"
+output_dir="/home/ubuntu/pcap_captures/open5gs_${current_date}_captures/${ue_count}_${mode}_${test_script_name}_open5gs_${timestamp}"
 mkdir -p "$output_dir"
 
 declare -a pids
