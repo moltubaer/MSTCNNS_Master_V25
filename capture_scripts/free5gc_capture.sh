@@ -61,7 +61,9 @@ containers=(
 
 # Output directory for pcap files
 timestamp=$(date +%Y.%m.%d_%H.%M)
-output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_free5gc_${timestamp}"
+current_date=$(date +%d.%m.%Y)
+
+output_dir="/home/ubuntu/pcap_captures/${core}_${current_date}_captures/${ue_count}_${mode}_${test_script_name}_free5gc_${timestamp}"
 mkdir -p "$output_dir"
 
 declare -a pids
