@@ -54,7 +54,7 @@ fi
 source "$CONFIG_FILE"
 
 # Validate the test script
-if [[ "$TEST_SCRIPT" != "ue_reg.py" && "$TEST_SCRIPT" != "pdu_est.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_rel.py" ]]; then
+if [[ "$TEST_SCRIPT" != "ue_reg.py" && "$TEST_SCRIPT" != "pdu_est.py" && "$TEST_SCRIPT" != "ue_dereg.py" && "$TEST_SCRIPT" != "pdu_rel.py" && "$TEST_SCRIPT" != "ue_reg_pdu.py" ]]; then
   echo "❌ Invalid test script: $TEST_SCRIPT. Valid options are: run_ues.py, pdu_sessions.py, ue_dereg.py."
   exit 1
 fi
