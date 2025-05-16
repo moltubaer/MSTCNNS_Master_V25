@@ -1,16 +1,18 @@
 import json
 import re
 import csv
+import os
 import argparse
 
 # UE Registration
-#   UDM
+#   AUSF, PCF, UDM
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
+parser.add_argument("--pattern", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
@@ -75,7 +77,7 @@ def match_pattern_type(decoded_text):
 events = []
 pattern_counters = {0: 1, 1: 1}
 
-with open(path + input_file + ".json", "r") as f:
+with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)
 
 for pkt in packets:
