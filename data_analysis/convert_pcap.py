@@ -2,7 +2,34 @@ import os
 import subprocess
 
 # To delete all JSON and PDML file recursively:
-#   find /mnt/c/Dev/master/pcap_captures/test -type f \( -name "*.json" -o -name "*.pdml" \) -delete
+#   find /mnt/c/Dev/master/pcap_captures/aether -type f \( -name "*.json" -o -name "*.pdml" \) -delete
+
+NF_FILTERS = {
+    "aether": {
+        "amf": {"filter": "kafka", "format": "json"},
+        "ausf": {"filter": "tcp", "format": "json"},
+        "smf": {"filter": "tcp", "format": "json"},
+        "nssf": {"filter": "tcp", "format": "json"},
+        "pcf": {"filter": "tcp", "format": "json"},
+        "upf": {"filter": "tcp", "format": "json"},
+    },
+    "open5gs": {
+        "amf": {"filter": "ngap", "format": "pdml"},
+        "ausf": {"filter": "tcp", "format": "json"},
+        "smf": {"filter": "tcp", "format": "json"},
+        "nssf": {"filter": "tcp", "format": "json"},
+        "pcf": {"filter": "tcp", "format": "json"},
+        "upf": {"filter": "tcp", "format": "json"},
+    },
+    "free5gc": {
+        "amf": {"filter": "ngap", "format": "pdml"},
+        "ausf": {"filter": "tcp", "format": "json"},
+        "smf": {"filter": "tcp", "format": "json"},
+        "nssf": {"filter": "tcp", "format": "json"},
+        "pcf": {"filter": "tcp", "format": "json"},
+        "upf": {"filter": "tcp", "format": "json"},
+    }
+}
 
 def extract_nf(file_name: str) -> str:
     name = file_name.lower()
@@ -17,7 +44,7 @@ def extract_ue_count(folder_name: str) -> str:
     parts = folder_name.split("-")
     return parts[0] if parts and parts[0].isdigit() else "X"
 
-def convert_pcap_recursive(root_dir: str):
+def convert_pcap_recursive(root_dir: str, core: str):
     for dirpath, _, filenames in os.walk(root_dir):
         for file in filenames:
             if not file.endswith(".pcap"):
@@ -29,18 +56,32 @@ def convert_pcap_recursive(root_dir: str):
             # Check if it's a ueransim capture
             is_ueransim = "ueransim" in file.lower()
 
+            nf_type = None
+            for nf in NF_FILTERS.get(core, {}):
+                if nf in file.lower():
+                    nf_type = nf
+                    break
+
             target_subdir_name = os.path.basename(dirpath)  # Use parent folder name in all cases
 
             if is_ueransim:
                 output_ext = ".pdml"
                 tshark_format = "pdml"
                 display_filter = "ngap"
-                subfolder = "pdml"
+                subfolder = "macro_data"
+
+            elif nf_type:
+                nf_config = NF_FILTERS[core][nf_type]
+                tshark_format = nf_config["format"]
+                display_filter = nf_config["filter"]
+                output_ext = f".{tshark_format}"
+                subfolder = "micro_data"
+
             else:
                 output_ext = ".json"
                 tshark_format = "json"
                 display_filter = "tcp"
-                subfolder = "json"
+                subfolder = "micro_data"
 
             output_filename = f"{base_filename}{output_ext}"
 
@@ -99,8 +140,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Recursively convert .pcap files to JSON or PDML.")
     parser.add_argument("--input", "-i", required=True, help="Root directory containing .pcap files")
+    parser.add_argument("--core", "-c", required=True, choices=NF_FILTERS.keys(), help="5G core type")
     args = parser.parse_args()
     # /mnt/c/Dev/master/pcap_captures/aether
 
-    convert_pcap_recursive(args.input)
+    convert_pcap_recursive(args.input, args.core)
 
