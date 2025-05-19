@@ -46,15 +46,21 @@ pattern_pcf = [
     re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
 ]
 
+use_imsi_id = False
+
 # === Select Pattern Set ===
 if args.pattern == "udm":
     patterns = pattern_udm
 elif args.pattern == "ausf":
     patterns = pattern_ausf
+    use_imsi_id = True
 elif args.pattern == "pcf":
     patterns = pattern_pcf
+    use_imsi_id = True
 else:
     raise ValueError(f"Unknown pattern set: {args.pattern}")
+
+print(patterns)
 
 # === Decode TCP Payload ===
 def decode_payload(hex_str):
@@ -72,6 +78,14 @@ def match_pattern_type(decoded_text):
         if pattern.search(decoded_text):
             return idx
     return None
+
+def extract_ids(text):
+    match = re.search(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", text, re.IGNORECASE)
+    if not match:
+        return None
+
+    digits = ''.join(filter(str.isdigit, match.group(1)))
+    return int(digits[-10:]) if digits else None
 
 # === Process PCAP JSON ===
 events = []
@@ -103,8 +117,16 @@ for pkt in packets:
     pattern_type = match_pattern_type(decoded)
 
     if decoded.strip() and pattern_type is not None:
-        event_id = pattern_counters[pattern_type]
-        pattern_counters[pattern_type] += 1
+        if use_imsi_id:
+            imsi = extract_ids(decoded)
+            if imsi:
+                event_id = imsi
+            else:
+                event_id = pattern_counters[pattern_type]
+                pattern_counters[pattern_type] += 1
+        else:
+            event_id = pattern_counters[pattern_type]
+            pattern_counters[pattern_type] += 1
 
         events.append({
             "frame_number": frame_number,
