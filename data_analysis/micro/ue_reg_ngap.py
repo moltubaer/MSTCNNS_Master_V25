@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(description="Parse messages using specified NF 
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
+parser.add_argument("--pattern", "-p", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===

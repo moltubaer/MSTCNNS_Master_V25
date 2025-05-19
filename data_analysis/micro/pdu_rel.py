@@ -1,10 +1,11 @@
 import json
 import re
+import os
 import csv
 import argparse
+from collections import defaultdict
 
 # PDU Session Release
-#   SMF
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
@@ -23,15 +24,43 @@ output_csv = f"{args.output}/{input_file}.csv"
 
 # === Pattern Definitions ===
 pattern_smf = [
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}')
+    # Open5GS
+    # re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
+    # re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}'),
+    # Free5GC
+    re.compile(r'"n1SmMsg"\s*:\s*{\s*"contentId"\s*:\s*"PDUSessionReleaseCommand"}\s*,\s*"n2SmInfo"\s*:\s*{\s*"contentId"\s*:\s*"PDUResourceReleaseCommand"}\s*,\s*"n2SmInfoType"\s*:\s*"PDU_RES_REL_CMD"', re.IGNORECASE),
+    re.compile(r'grant_type=client_credentials&[^ ]*nfType=SMF[^ ]*scope=npcf-smpolicycontrol', re.IGNORECASE),
+    # Aether
+
+]
+
+pattern_pcf = [
+    # Open5GS
+
+    # Free5GC
+    re.compile(r"grant_type=client_credentials.*?nfType=PCF.*?scope=nudr-dr", re.IGNORECASE),
+    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
+    # Aether
+
+]
+
+pattern_udm = [
+    # Open5GS
+
+    # Free5GC
+    re.compile(r"grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr", re.IGNORECASE),
+    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
+    # Aether
+
 ]
 
 # === Select Pattern Set ===
 if args.pattern == "smf":
     patterns = pattern_smf
-# elif args.pattern == "udm":
-#     patterns = pattern_ausf
+elif args.pattern == "pcf":
+    patterns = pattern_pcf
+elif args.pattern == "udm":
+    patterns = pattern_udm
 else:
     raise ValueError(f"Unknown pattern set: {args.pattern}")
 
@@ -55,9 +84,9 @@ def match_pattern_type(decoded_text):
 
 # === Processing ===
 deregistration_events = []
-pattern_counters = {0: 1, 1: 1}  # Initialize counters for pattern 0 and 1
+pattern_counters = defaultdict(lambda: 1)
 
-with open(path + input_file + ".json", "r") as f:
+with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)
 
 for pkt in packets:
@@ -75,6 +104,8 @@ for pkt in packets:
         direction = "recv"
     elif pkttype == "4":
         direction = "send"
+    else:
+        direction = "unknown"
 
     if not payload:
         continue

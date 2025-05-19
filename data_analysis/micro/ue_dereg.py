@@ -1,5 +1,6 @@
 import json
 import re
+import os
 import csv
 import argparse
 
@@ -47,7 +48,7 @@ def match_pattern_type(decoded_text):
 deregistration_events = []
 pattern_counters = {0: 1, 1: 1}  # Initialize counters for pattern 0 and 1
 
-with open(path + "//" + input_file + ".json", "r") as f:
+with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)
 
 for pkt in packets:
@@ -65,6 +66,8 @@ for pkt in packets:
         direction = "recv"
     elif pkttype == "4":
         direction = "send"
+    else:
+        direction = "unknown"
 
     # direction = "send" if srcport > dstport else "recv"
 

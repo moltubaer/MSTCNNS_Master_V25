@@ -9,6 +9,9 @@ SCRIPT_MAP = {
     "aether": {
         "ue_reg": {
             "amf": {".json": ["ue_reg_kafka.py"]},
+            "ausf": {".json": ["ue_reg_json.py"]},
+            "pcf": {".json": ["ue_reg_json.py"]},
+            "udm": {".json": ["ue_reg_json.py"]},
         },
         "ue_dereg": {
             "amf": {".json": ["ue_dereg.py"]},
@@ -34,24 +37,40 @@ SCRIPT_MAP = {
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},
-            "udm": {".json": ["pdu_est_imsi.py"]},
+            "pcf": {".json": ["pdu_est_json.py"]},
+            "smf": {".json": ["pdu_est_json.py"]},
+            "udm": {".json": ["pdu_est_json.py"]},
         },
         "pdu_rel": {
             "amf": {".pdml": ["pdu_rel_ngap.py"]},
+            "pcf": {".json": ["pdu_rel_json.py"]},
+            "smf": {".json": ["pdu_rel_json.py"]},
+            "udm": {".json": ["pdu_rel_json.py"]},
         },
     },
     "free5gc": {
         "ue_reg": {
             "amf": {".pdml": ["ue_reg_ngap.py"]},
+            "ausf": {".json": ["ue_reg_json.py"]},
+            "pcf": {".json": ["ue_reg_json.py"]},
+            "udm": {".json": ["ue_reg_json.py"]},
         },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
+            "udm": {".json": ["ue_dereg.py"]},
+            # "pcf": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
-            "smf": {".pdml": ["pdu_est_ngap.py"]},
+            "amf": {".pdml": ["pdu_est_ngap.py"]},
+            "pcf": {".json": ["pdu_est_json.py"]},
+            "smf": {".json": ["pdu_est_json.py"]},
+            "udm": {".json": ["pdu_est_json.py"]},
         },
         "pdu_rel": {
-            "smf": {".pdml": ["pdu_rel_ngap.py"]},
+            "amf": {".pdml": ["pdu_rel_ngap.py"]},
+            "pcf": {".json": ["pdu_rel.py"]},
+            "smf": {".json": ["pdu_rel.py"]},
+            "udm": {".json": ["pdu_rel.py"]},
         },
     },
 }
@@ -94,18 +113,6 @@ def detect_and_run(base_dir, output_dir):
             out_subdir = Path(output_dir) / path.relative_to(base_path).parent
             out_subdir.mkdir(parents=True, exist_ok=True)
 
-            # # Call script via subprocess and pass args
-            # try:
-            #     input_dir = str(path.parent)
-            #     input_file = path.name
-            #     subprocess.run(["python3", script, "--input", input_dir, "--name", input_file, "--output", str(out_subdir)], check=True)
-            #     # print()
-            #     # print(["python3", script, "--input", input_dir, "--name", input_file, "--output", str(out_subdir)])
-            #     # print()
-            #     # print()
-            # except subprocess.CalledProcessError as e:
-            #     print(f"[ERROR] Failed to run {script} on {path}: {e}")
-
             # Call script via subprocess and pass args
             try:
                 input_dir = str(path.parent)
@@ -113,10 +120,18 @@ def detect_and_run(base_dir, output_dir):
 
                 # Build command
                 cmd = ["python3", script, "--input", input_dir, "--name", input_file, "--output", str(out_subdir)]
+                print(cmd)
                 
                 # If the script requires a pattern (like ue_reg_json.py), pass nf
-                if "ue_reg_json.py" in script:
-                    cmd += ["--pattern", nf]
+                # if "ue_reg_json.py" in script:
+                #     cmd += ["--pattern", nf]
+                # elif "pdu_est.py" in script:
+                #     cmd += ["--pattern", nf]
+                # elif "pdu_rel.py" in script:
+                #     cmd += ["--pattern", nf]
+
+                cmd += ["--pattern", nf]
+
 
                 subprocess.run(cmd, check=True)
 
@@ -135,8 +150,8 @@ def detect_and_run(base_dir, output_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Detect NF files and map to scripts")
-    parser.add_argument("--dir", "-d", default="/mnt/c/Dev/master/pcap_captures/open5gs/test", help="Path to search recursively")
+    parser.add_argument("--input", "-i", default="/mnt/c/Dev/master/pcap_captures/open5gs/test", help="Path to search recursively")
     parser.add_argument("--output", "-o", default="/mnt/c/Dev/master/pcap_captures/open5gs/output", help="Directory to store outputs")
     args = parser.parse_args()
 
-    detect_and_run(args.dir, args.output)
+    detect_and_run(args.input, args.output)
