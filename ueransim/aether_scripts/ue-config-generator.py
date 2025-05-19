@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_index, base_imsi_str):
+def generate_aether_ue_configs(template_path, output_dir, start_index, end_index, base_imsi_str):
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     with open(template_path, 'r') as file:
@@ -21,10 +21,10 @@ def generate_open5gs_ue_configs(template_path, output_dir, start_index, end_inde
         print(f"Generated {filename} with IMSI {imsi}")
 
 # Example usage
-generate_open5gs_ue_configs(
+generate_aether_ue_configs(
     template_path='../config/aether-ue.yaml',
     output_dir='/home/ubuntu/UERANSIM/config/tests-ue-with-pdu',
     start_index=1,
     end_index=1000,
-    base_imi_str="208930100006001"
+    base_imsi_str="208930100006001"
 )
