@@ -29,14 +29,15 @@ SCRIPT_MAP = {
         },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
-            "pcf": {".json": ["ue_dereg.py"]},
             "udm": {".json": ["ue_dereg.py"]},
+            # "pcf": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
-            "smf": {".pdml": ["pdu_est_ngap.py"]},
+            "amf": {".pdml": ["pdu_est_ngap.py"]},
+            "udm": {".json": ["pdu_est_imsi.py"]},
         },
         "pdu_rel": {
-            "smf": {".pdml": ["pdu_rel_ngap.py"]},
+            "amf": {".pdml": ["pdu_rel_ngap.py"]},
         },
     },
     "free5gc": {
@@ -118,6 +119,14 @@ def detect_and_run(base_dir, output_dir):
                     cmd += ["--pattern", nf]
 
                 subprocess.run(cmd, check=True)
+
+                # Count lines in the resulting CSV file (if created)
+                output_csv = out_subdir / f"{input_file}.csv"
+                if output_csv.exists():
+                    with open(output_csv, "r", encoding="utf-8") as f:
+                        line_count = sum(1 for _ in f) - 1  # subtract 1 for header
+                    print(f"📊 {output_csv.name}: {line_count} data row(s)")
+
 
             except subprocess.CalledProcessError as e:
                 print(f"[ERROR] Failed to run {script} on {path}: {e}")
