@@ -3,59 +3,68 @@ import re
 import csv
 import argparse
 
-# PDU Session Release
-#   SMF
+# UE Registration
+#   AUSF, PCF, UDM
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
-parser.add_argument("--pattern", "-p", type=str, required=True, help="Name of pattern to use (e.g. udm, ausf, pcf)")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/pdu_rel"
+# path = "../data/linear/open5gs/ue_reg/"
 path = args.input
-input_file = args.name  # 100.smf.pdu_rel.json
+input_file = args.name  # 100.udm.ue_reg.json
 output_csv = f"{args.output}/{input_file}.csv"
 
 
 # === Pattern Definitions ===
-pattern_smf = [
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
-    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}')
+pattern_ = [
+    re.compile(
+        r'"servingNetworkName"\s*:\s*"5G:mnc\d{3}\.mcc\d{3}\.3gppnetwork\.org"\s*,\s*"ausfInstanceId"\s*:\s*"[a-f0-9-]+"',
+        re.IGNORECASE
+    ),
+    re.compile(
+        r'"authType"\s*:\s*"5G_AKA"\s*,\s*"authenticationVector"\s*:\s*\{[^}]*?"xresStar"\s*:\s*"[a-f0-9]+"\s*,[^}]*?\}\s*,\s*"supi"\s*:\s*"imsi-\d+"',
+        re.DOTALL | re.IGNORECASE
+    ),
+]
+pattern_ausf = [
+    # re.compile(r'"avType"\s*:\s*"5G_HE_AKA"', re.IGNORECASE),
+    # re.compile(r'"kausf"\s*:\s*"[a-f0-9]{64}"', re.IGNORECASE),
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+]
+pattern_pcf = [
+    # re.compile(r'"policyAssociationId"\s*:\s*"[a-zA-Z0-9_-]+"', re.IGNORECASE),
+    # re.compile(r'"trigger"\s*:\s*"REGISTRATION"', re.IGNORECASE),
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
 ]
 
-# === Select Pattern Set ===
-if args.pattern == "smf":
-    patterns = pattern_smf
-# elif args.pattern == "udm":
-#     patterns = pattern_ausf
-else:
-    raise ValueError(f"Unknown pattern set: {args.pattern}")
 
-# === Helper: decode hex TCP payload ===
+# === Decode TCP Payload ===
 def decode_payload(hex_str):
     try:
         hex_str_clean = hex_str.replace(":", "")
         decoded_bytes = bytes.fromhex(hex_str_clean)
         decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
-        cleaned_text = ''.join(c for c in decoded_text if c.isprintable())
-        return cleaned_text.replace('\n', '').replace('\r', '')
+        return ''.join(c for c in decoded_text if c.isprintable()).replace('\n', '').replace('\r', '')
     except Exception:
         return ""
 
-# === Helper: check which pattern matches ===
+# === Match Pattern Type ===
 def match_pattern_type(decoded_text):
     for idx, pattern in enumerate(patterns):
         if pattern.search(decoded_text):
-            return idx  # return 0 for first pattern, 1 for second pattern
+            return idx
     return None
 
-# === Processing ===
-deregistration_events = []
-pattern_counters = {0: 1, 1: 1}  # Initialize counters for pattern 0 and 1
+# === Process PCAP JSON ===
+events = []
+pattern_counters = {0: 1, 1: 1}
 
 with open(path + input_file + ".json", "r") as f:
     packets = json.load(f)
@@ -66,8 +75,6 @@ for pkt in packets:
     payload = tcp.get("tcp.payload")
     frame_number = layers.get("frame", {}).get("frame.number", "N/A")
     timestamp = layers.get("frame", {}).get("frame.time_relative", "N/A")
-    srcport = int(layers.get("tcp", {}).get("tcp.srcport", 0))
-    dstport = int(layers.get("tcp", {}).get("tcp.dstport", 0))
 
     sll = layers.get("sll", {})
     pkttype = sll.get("sll.pkttype")
@@ -75,32 +82,32 @@ for pkt in packets:
         direction = "recv"
     elif pkttype == "4":
         direction = "send"
+    else:
+        direction = "unknown"
 
     if not payload:
         continue
 
     decoded = decode_payload(payload)
-
     pattern_type = match_pattern_type(decoded)
 
     if decoded.strip() and pattern_type is not None:
         event_id = pattern_counters[pattern_type]
         pattern_counters[pattern_type] += 1
 
-        deregistration_events.append({
+        events.append({
             "frame_number": frame_number,
             "timestamp": timestamp,
             "direction": direction,
             "id": event_id,
-            "decoded_payload": decoded    # Don't print because of linebreaks in the csv file.
+            "decoded_payload": decoded
         })
 
-# === Write to CSV ===
+# === Save CSV ===
 with open(output_csv, "w", newline='', encoding="utf-8") as csvfile:
-    fieldnames = ["frame_number", "timestamp", "direction", "id", "decoded_payload"]    
+    fieldnames = ["frame_number", "timestamp", "direction", "id", "decoded_payload"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
     writer.writeheader()
-    writer.writerows(deregistration_events)
+    writer.writerows(events)
 
-print(f"✅ Deregistration events with IDs saved to {output_csv}")
+print(f"✅ Parsed {len(events)} events to {output_csv} using pattern: {args.pattern}")

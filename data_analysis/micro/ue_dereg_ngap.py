@@ -12,6 +12,8 @@ parser = argparse.ArgumentParser(description="Parse messages using specified NF 
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
+parser.add_argument("--pattern", "-p", type=str)
+parser.add_argument("--core", "-c", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
@@ -23,10 +25,10 @@ output_csv = f"{args.output}/{input_file}.csv"
 
 # === Constants ===
 FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport
-RELEASE_PROCEDURE_CODE = "41"  # PDU Session Resource Setup Request
+RELEASE_PROCEDURE_CODE = "41"  # UEContextReleaseCommand
 
 # === Parse PDML ===
-tree = ET.parse(path + input_file + ".pdml")
+tree = ET.parse(os.path.join(path, input_file))
 root = tree.getroot()
 
 # === Extract Relevant Packet Info ===
@@ -64,7 +66,7 @@ for packet in root.findall("packet"):
         pdu_type = current_pdu_types[idx] if idx < len(current_pdu_types) else (current_pdu_types[-1] if current_pdu_types else None)
 
         output.append((ran_id, frame_number, timestamp, proc_code, pdu_type))
-        print(f"[DEBUG] Frame {frame_number}: ran_id={ran_id}, procedureCode={proc_code}, pdu_type={pdu_type}")
+        # print(f"[DEBUG] Frame {frame_number}: ran_id={ran_id}, procedureCode={proc_code}, pdu_type={pdu_type}")
 
 # === Organize by RAN UE NGAP ID ===
 packets_by_id = defaultdict(list)
@@ -82,7 +84,7 @@ for ran_id, packet_list in packets_by_id.items():
     for frame_number, timestamp, procedure_code, pdu_type in sorted(packet_list):
         if procedure_code == FIRST_PROCEDURE_CODE and pdu_type == "initiating" and not first:
             first = (frame_number, timestamp)
-        elif procedure_code == RELEASE_PROCEDURE_CODE and pdu_type == "initiating":
+        elif procedure_code == RELEASE_PROCEDURE_CODE:
             release = (frame_number, timestamp)
 
     if first:
@@ -103,7 +105,7 @@ for ran_id, packet_list in packets_by_id.items():
         })
 
 # === Write to CSV ===
-print(f"[INFO] Writing results to {output_csv}")
+# print(f"[INFO] Writing results to {output_csv}")
 os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
 with open(output_csv, "w", newline="") as csvfile:

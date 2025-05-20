@@ -3,47 +3,56 @@ import re
 import os
 import csv
 import argparse
+from collections import defaultdict
 
-# UE Deregistration
-#   UDM
+# PDU Session Release
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
-parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf")
+parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf, pcf")
 parser.add_argument("--core", required=True, type=str, help="Core name: free5gc, open5gs, aether")
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/ue_dereg"
+# path = "../data/linear/open5gs/pdu_rel"
 path = args.input
-input_file = args.name  # 100.udm.ue_dereg.json
+input_file = args.name  # 100.smf.pdu_rel.json
 output_csv = f"{args.output}/{input_file}.csv"
 
-# === Deregistration regex patterns ===
-pattern_udm = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+
+# === Pattern Definitions ===
+pattern_smf = [
     # Open5GS
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"\d+"\},\s*"purgeFlag"\s*:\s*true\}',re.IGNORECASE),
-    re.compile(r'\[\s*\{"op"\s*:\s*"replace",\s*"path"\s*:\s*"?PurgeFlag"?,\s*"value"\s*:\s*true\}\s*\]',re.IGNORECASE),
-    # re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    # re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
+    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
+    re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}'),
     # Free5GC
-    re.compile(r'grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr.*?targetNfType=UDR', re.IGNORECASE),
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"[a-zA-Z0-9]+"\},\s*"purgeFlag"\s*:\s*true\}', re.IGNORECASE),
+    re.compile(r'"n1SmMsg"\s*:\s*{\s*"contentId"\s*:\s*"PDUSessionReleaseCommand"}\s*,\s*"n2SmInfo"\s*:\s*{\s*"contentId"\s*:\s*"PDUResourceReleaseCommand"}\s*,\s*"n2SmInfoType"\s*:\s*"PDU_RES_REL_CMD"', re.IGNORECASE),
+    re.compile(r'grant_type=client_credentials&[^ ]*nfType=SMF[^ ]*scope=npcf-smpolicycontrol', re.IGNORECASE),
     # Aether
 
 ]
 
-pattern_smf = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+pattern_pcf = [
+    # Open5GS
+    # Only on identifiable message
+    re.compile(r".?b\*ԎZKRX\+\$MTd0\S*"),
+    re.compile(r'"servingNetwork"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\}\s*,\s*"ranNasRelCauses"\s*:\s*\[\s*\{"ngApCause"\s*:\s*\{"group"\s*:\s*\d+,\s*"value"\s*:\s*\d+\},\s*"5gMmCause"\s*:\s*\d+,\s*"5gSmCause"\s*:\s*\d+\}'),
+    # Free5GC
+    re.compile(r"grant_type=client_credentials.*?nfType=PCF.*?scope=nudr-dr", re.IGNORECASE),
+    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
+    # Aether
+
+]
+
+pattern_udm = [
     # Open5GS
     # No identifiable messages
     # Free5GC
-    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
+    re.compile(r"grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr", re.IGNORECASE),
+    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
     # Aether
 
 ]
@@ -54,11 +63,13 @@ use_imsi_id = False
 pattern_matrix = {
     ("udm", "free5gc"): (pattern_udm, True),
     ("smf", "free5gc"): (pattern_smf, True),
+    ("pcf", "free5gc"): (pattern_pcf, True),
     ("udm", "open5gs"): (pattern_udm, True),
     ("smf", "open5gs"): (pattern_smf, True),
+    ("pcf", "open5gs"): (pattern_pcf, True),
     # ("udm", "aether"): (pattern_udm, True),
     # ("smf", "aether"): (pattern_smf, True),
-    # ("smf", "aether"): (pattern_smf, True),
+    # ("pcf", "aether"): (pattern_pcf, True),
 }
 
 try:

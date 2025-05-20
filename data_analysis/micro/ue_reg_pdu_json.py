@@ -1,63 +1,81 @@
 import json
 import re
-import os
 import csv
+import os
 import argparse
 
-# UE Deregistration
-#   UDM
+# UE Registration
+#   AUSF, PCF, UDM
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
-parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf")
+parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, ausf, pcf")
 parser.add_argument("--core", required=True, type=str, help="Core name: free5gc, open5gs, aether")
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/ue_dereg"
+# path = "../data/linear/open5gs/ue_reg/"
 path = args.input
-input_file = args.name  # 100.udm.ue_dereg.json
+input_file = args.name  # 100.udm.ue_reg.json
 output_csv = f"{args.output}/{input_file}.csv"
 
-# === Deregistration regex patterns ===
-pattern_udm = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
-    # Open5GS
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"\d+"\},\s*"purgeFlag"\s*:\s*true\}',re.IGNORECASE),
-    re.compile(r'\[\s*\{"op"\s*:\s*"replace",\s*"path"\s*:\s*"?PurgeFlag"?,\s*"value"\s*:\s*true\}\s*\]',re.IGNORECASE),
-    # re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    # re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
-    # Free5GC
-    re.compile(r'grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr.*?targetNfType=UDR', re.IGNORECASE),
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"[a-zA-Z0-9]+"\},\s*"purgeFlag"\s*:\s*true\}', re.IGNORECASE),
-    # Aether
 
+# === Pattern Definitions ===
+pattern_udm = [
+    # Open5GS
+    re.compile(r'"servingNetworkName"\s*:\s*"5G:mnc\d{3}\.mcc\d{3}\.3gppnetwork\.org"\s*,\s*"ausfInstanceId"\s*:\s*"[a-f0-9-]+"',re.IGNORECASE),
+    re.compile(r'"authType"\s*:\s*"5G_AKA"\s*,\s*"authenticationVector"\s*:\s*\{[^}]*?"xresStar"\s*:\s*"[a-f0-9]+"\s*,[^}]*?\}\s*,\s*"supi"\s*:\s*"imsi-\d+"',re.DOTALL | re.IGNORECASE),
+    # Free5GC
+    
+    # Open5GS
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # Free5GC
+    re.compile(r'"singleNssai"\s*:\s*{.*?"sst"\s*:\s*\d+.*?"sd"\s*:\s*"\d+".*?}\s*,\s*"dnnConfigurations"\s*:\s*{.*?"internet".*?}',re.DOTALL | re.IGNORECASE),
+]
+
+pattern_ausf = [
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+]
+
+pattern_pcf = [
+    # Open5GS
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # Free5GC
+    # re.compile(r'"policyAssociationId"\s*:\s*"[a-zA-Z0-9_-]+"', re.IGNORECASE),
+    # re.compile(r'"trigger"\s*:\s*"REGISTRATION"', re.IGNORECASE),
+    re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*"pduSessionId"\s*:\s*\d+.*"dnn"\s*:\s*".*?".*"notificationUri"\s*:\s*".*?"', re.IGNORECASE | re.DOTALL),
+    re.compile(r'insert.*chargingData.*ueId\s*imsi-\d{5,15}', re.IGNORECASE | re.DOTALL)
+    # Aether
 ]
 
 pattern_smf = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
     # Open5GS
-    # No identifiable messages
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"pei"\s*:\s*"imeisv-\d+".*?"n1SmMsg".*?"smContextStatusUri"', re.DOTALL),
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"subsSessAmbr".*?"sliceInfo"', re.DOTALL),
     # Free5GC
-    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
-    # Aether
 
+    # Aether
 ]
+
 
 use_imsi_id = False
 
 # === Select Pattern Set ===
 pattern_matrix = {
     ("udm", "free5gc"): (pattern_udm, True),
+    ("ausf", "free5gc"): (pattern_ausf, True),
+    ("pcf", "free5gc"): (pattern_pcf, True),
     ("smf", "free5gc"): (pattern_smf, True),
     ("udm", "open5gs"): (pattern_udm, True),
+    ("ausf", "open5gs"): (pattern_ausf, True),
+    ("pcf", "open5gs"): (pattern_pcf, True),
     ("smf", "open5gs"): (pattern_smf, True),
     # ("udm", "aether"): (pattern_udm, True),
-    # ("smf", "aether"): (pattern_smf, True),
+    # ("ausf", "aether"): (pattern_ausf, True),
+    # ("pcf", "aether"): (pattern_pcf, True),
     # ("smf", "aether"): (pattern_smf, True),
 }
 
@@ -85,27 +103,19 @@ def match_pattern_type(decoded_text):
             return idx
     return None
 
-# def extract_ids(text):
-#     match = re.search(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", text, re.IGNORECASE)
-#     if not match:
-#         return None
-
-#     digits = ''.join(filter(str.isdigit, match.group(1)))
-#     return int(digits[-10:]) if digits else None
-
 def extract_ids(text):
-    match = re.search(r"(?:imsi-?|suci-)(\d{5,15})", text, re.IGNORECASE)
+    match = re.search(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", text, re.IGNORECASE)
     if not match:
         return None
-    
-    digits = match.group(1)
-    return int(digits[-10:].lstrip("0") or "0")
 
+    digits = ''.join(filter(str.isdigit, match.group(1)))
+    return int(digits[-10:]) if digits else None
 
 # === Process PCAP JSON ===
 events = []
 # pattern_counters = {0: 1, 1: 1}
 pattern_counters = {i: 1 for i in range(len(patterns))}
+
 
 with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)

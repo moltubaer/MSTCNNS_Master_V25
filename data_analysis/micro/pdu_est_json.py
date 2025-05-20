@@ -1,51 +1,58 @@
 import json
 import re
-import os
 import csv
+import os
 import argparse
 
-# UE Deregistration
-#   UDM
+# UE Registration
+#   AUSF, PCF, UDM
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
-parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf")
+parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf, pcf")
 parser.add_argument("--core", required=True, type=str, help="Core name: free5gc, open5gs, aether")
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/ue_dereg"
 path = args.input
-input_file = args.name  # 100.udm.ue_dereg.json
+input_file = args.name
 output_csv = f"{args.output}/{input_file}.csv"
 
-# === Deregistration regex patterns ===
-pattern_udm = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
-    # Open5GS
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"\d+"\},\s*"purgeFlag"\s*:\s*true\}',re.IGNORECASE),
-    re.compile(r'\[\s*\{"op"\s*:\s*"replace",\s*"path"\s*:\s*"?PurgeFlag"?,\s*"value"\s*:\s*true\}\s*\]',re.IGNORECASE),
-    # re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    # re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
-    # Free5GC
-    re.compile(r'grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr.*?targetNfType=UDR', re.IGNORECASE),
-    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"[a-zA-Z0-9]+"\},\s*"purgeFlag"\s*:\s*true\}', re.IGNORECASE),
-    # Aether
+# === Pattern Definitions ===
+pattern_pcf = [
+    # re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*?"pduSessionId"\s*:\s*\d+', re.DOTALL),
+    # re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*?"ipv4Addr"\s*:\s*"\d+\.\d+\.\d+\.\d+"', re.DOTALL),
+    # re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # re.compile(r'insert.*policyData\.ues\.chargingData.*imsi-\d{5,15}', re.IGNORECASE),
 
+    # Open5GS
+    re.compile(r'"imsi-\d{5,15}', re.IGNORECASE),
+    # Free5GC
+    re.compile(r'"supi"\s*:\s*"imsi-\d{5,15}".*"pduSessionId"\s*:\s*\d+.*"dnn"\s*:\s*".*?".*"notificationUri"\s*:\s*".*?"', re.IGNORECASE | re.DOTALL),
+    re.compile(r'insert.*chargingData.*ueId\s*imsi-\d{5,15}', re.IGNORECASE | re.DOTALL)
+    # Aether
 ]
 
 pattern_smf = [
-    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
     # Open5GS
-    # No identifiable messages
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"pei"\s*:\s*"imeisv-\d+".*?"n1SmMsg".*?"smContextStatusUri"', re.DOTALL),
+    re.compile(r'"supi"\s*:\s*"imsi-\d{15}".*?"subsSessAmbr".*?"sliceInfo"', re.DOTALL),
     # Free5GC
-    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
-    # Aether
 
+    # Aether
+]
+
+pattern_udm = [
+    # Open5GS
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # Free5GC
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    re.compile(r'"singleNssai"\s*:\s*{.*?"sst"\s*:\s*\d+.*?"sd"\s*:\s*"\d+".*?}\s*,\s*"dnnConfigurations"\s*:\s*{.*?"internet".*?}',re.DOTALL | re.IGNORECASE),
+    # Aether
 ]
 
 use_imsi_id = False
@@ -54,11 +61,13 @@ use_imsi_id = False
 pattern_matrix = {
     ("udm", "free5gc"): (pattern_udm, True),
     ("smf", "free5gc"): (pattern_smf, True),
+    ("pcf", "free5gc"): (pattern_pcf, True),
     ("udm", "open5gs"): (pattern_udm, True),
     ("smf", "open5gs"): (pattern_smf, True),
+    ("pcf", "open5gs"): (pattern_pcf, True),
     # ("udm", "aether"): (pattern_udm, True),
     # ("smf", "aether"): (pattern_smf, True),
-    # ("smf", "aether"): (pattern_smf, True),
+    # ("pcf", "aether"): (pattern_pcf, True),
 }
 
 try:
@@ -66,7 +75,7 @@ try:
 except KeyError:
     raise ValueError(f"Unsupported combination: pattern={args.pattern}, core={args.core}")
 
-# print(patterns)
+# # print(patterns)
 
 # === Decode TCP Payload ===
 def decode_payload(hex_str):
