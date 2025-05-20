@@ -23,7 +23,7 @@ def generate_free5gc_ue_configs(template_path, output_dir, start_index, end_inde
 # Example usage
 generate_free5gc_ue_configs(
     template_path='../config/free5gc-ue.yaml',
-    output_dir='/home/ubuntu/UERANSIM/config/tests-pdu',
+    output_dir='/home/ubuntu/UERANSIM/config/tests-ue-with-pdu',
     start_index=1,
     end_index=1000,
     base_imsi_str="208930000000001"
