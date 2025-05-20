@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 import argparse
 
-# PDU Session Release
+# UE Registration
 #   AMF
 
 # === CLI Argument ===
@@ -17,14 +17,15 @@ parser.add_argument("--core", "-c", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/pdu_rel"
+# path = "../data/linear/open5gs/ue_reg/"
 path = args.input
-input_file = args.name  # 100.amf.pdu_rel.pdml
+input_file = args.name  # 100.amf.ue_reg.pdml
 output_csv = f"{args.output}/{input_file}.csv"
 
+
 # === Constants ===
-FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport
-RELEASE_PROCEDURE_CODE = "28"  # PDU Session Resource Release Request
+FIRST_PROCEDURE_CODE = "15"  # InitialUEMEssage
+RELEASE_PROCEDURE_CODE = "29"  # PDU Session Resource Setup Request
 
 # === Parse PDML ===
 tree = ET.parse(os.path.join(path, input_file))

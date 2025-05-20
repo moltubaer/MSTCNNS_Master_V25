@@ -1,7 +1,7 @@
 import json
 import os
 
-path = "/mnt/c/Dev/master/pcap_captures/open5gs_19.05.2025_captures/micro_data/100_linear_pdu_rel_open5gs_2025.05.19_12.58/open5gs_udm.json"
+path = "/mnt/c/Dev/master/pcap_captures/open5gs_19.05.2025_captures/100_linear_pdu_rel_open5gs_2025.05.19_12.58/open5gs_udm.json"
 output_file = os.path.basename(path) + ".decoded.txt"
 
 # Improved cleaner

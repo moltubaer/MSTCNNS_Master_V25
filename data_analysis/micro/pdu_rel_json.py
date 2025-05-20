@@ -38,6 +38,7 @@ pattern_smf = [
 pattern_pcf = [
     # Open5GS
     # Only on identifiable message
+    re.compile(r".?b\*ԎZKRX\+\$MTd0\S*"),
     re.compile(r'"servingNetwork"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\}\s*,\s*"ranNasRelCauses"\s*:\s*\[\s*\{"ngApCause"\s*:\s*\{"group"\s*:\s*\d+,\s*"value"\s*:\s*\d+\},\s*"5gMmCause"\s*:\s*\d+,\s*"5gSmCause"\s*:\s*\d+\}'),
     # Free5GC
     re.compile(r"grant_type=client_credentials.*?nfType=PCF.*?scope=nudr-dr", re.IGNORECASE),
@@ -76,7 +77,7 @@ try:
 except KeyError:
     raise ValueError(f"Unsupported combination: pattern={args.pattern}, core={args.core}")
 
-print(patterns)
+# print(patterns)
 
 # === Decode TCP Payload ===
 def decode_payload(hex_str):
@@ -114,7 +115,8 @@ def extract_ids(text):
 
 # === Process PCAP JSON ===
 events = []
-pattern_counters = {0: 1, 1: 1}
+# pattern_counters = {0: 1, 1: 1}
+pattern_counters = {i: 1 for i in range(len(patterns))}
 
 with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)

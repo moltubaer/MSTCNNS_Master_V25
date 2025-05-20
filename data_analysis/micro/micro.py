@@ -6,29 +6,19 @@ from pathlib import Path
 
 # Configure available analysis scripts
 SCRIPT_MAP = {
-    "aether": {
-        "ue_reg": {
-            "amf": {".json": ["ue_reg_kafka.py"]},
-            "ausf": {".json": ["ue_reg_json.py"]},
-            "pcf": {".json": ["ue_reg_json.py"]},
-            "udm": {".json": ["ue_reg_json.py"]},
-        },
-        "ue_dereg": {
-            "amf": {".json": ["ue_dereg.py"]},
-        },
-        "pdu_est": {
-            "smf": {".json": ["pdu_est.py"]},
-        },
-        "pdu_rel": {
-            "smf": {".json": ["pdu_rel.py"]},
-        },
-    },
     "open5gs": {
         "ue_reg": {
             "amf": {".pdml": ["ue_reg_ngap.py"]},
             "ausf": {".json": ["ue_reg_json.py"]},
             "pcf": {".json": ["ue_reg_json.py"]},
             "udm": {".json": ["ue_reg_json.py"]},
+        },
+        "ue_reg_pdu": {
+            "amf": {".pdml": ["ue_reg_pdu_ngap.py"]},
+            "ausf": {".json": ["ue_reg_pdu_json.py"]},
+            "pcf": {".json": ["ue_reg_pdu_json.py"]},
+            "udm": {".json": ["ue_reg_pdu_json.py"]},
+            "smf": {".json": ["ue_reg_pdu_json.py"]},
         },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
@@ -53,10 +43,16 @@ SCRIPT_MAP = {
             "pcf": {".json": ["ue_reg_json.py"]},
             "udm": {".json": ["ue_reg_json.py"]},
         },
+        "ue_reg_pdu": {
+            "amf": {".pdml": ["ue_reg_pdu_ngap.py"]},
+            "ausf": {".json": ["ue_reg_pdu_json.py"]},
+            "pcf": {".json": ["ue_reg_pdu_json.py"]},
+            "udm": {".json": ["ue_reg_pdu_json.py"]},
+            "smf": {".json": ["ue_reg_pdu_json.py"]},
+        },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
             "udm": {".json": ["ue_dereg.py"]},
-            "pcf": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},
@@ -66,17 +62,33 @@ SCRIPT_MAP = {
         },
         "pdu_rel": {
             "amf": {".pdml": ["pdu_rel_ngap.py"]},
-            "pcf": {".json": ["pdu_rel.py"]},
-            "smf": {".json": ["pdu_rel.py"]},
-            "udm": {".json": ["pdu_rel.py"]},
+            "pcf": {".json": ["pdu_rel_json.py"]},
+            "smf": {".json": ["pdu_rel_json.py"]},
+            "udm": {".json": ["pdu_rel_json.py"]},
         },
     },
+    # "aether": {
+    #     "ue_reg": {
+    #         "amf": {".json": ["ue_reg_kafka.py"]},
+    #         "ausf": {".json": ["ue_reg_json.py"]},
+    #         "pcf": {".json": ["ue_reg_json.py"]},
+    #         "udm": {".json": ["ue_reg_json.py"]},
+    #     },
+    #     "ue_dereg": {
+    #         "amf": {".json": ["ue_dereg.py"]},
+    #     },
+    #     "pdu_est": {
+    #         "smf": {".json": ["pdu_est.py"]},
+    #     },
+    #     "pdu_rel": {
+    #         "smf": {".json": ["pdu_rel.py"]},
+    #     },
+    # },
 }
 
 def detect_and_run(base_dir, output_dir):
     base_path = Path(base_dir)
-    pattern_dir = re.compile(r"(\d+)_.*_(ue_reg|ue_dereg|pdu_est|pdu_rel)_(aether|open5gs|free5gc)")
-    # pattern_file = re.compile(r"(?P<ue_num>\d+|open5gs|free5gc|aether)_(?P<nf>[a-z0-9\-]+)_capture(?P<ext>\.json|\.pdml)$")
+    pattern_dir = re.compile(r"(\d+)_.*_(ue_reg_pdu|ue_reg|ue_dereg|pdu_est|pdu_rel)_(aether|open5gs|free5gc)")
     pattern_file = re.compile(
         r"(?P<ue_num>\d+|open5gs|free5gc|aether)_(?P<nf>[a-z0-9\-]+)(?:_capture)?(?P<ext>\.json|\.pdml)$"
     )
@@ -130,7 +142,7 @@ def detect_and_run(base_dir, output_dir):
                 cmd += ["--pattern", nf]
                 cmd += ["--core", core]
 
-                print(cmd)
+                # print(cmd)
 
                 subprocess.run(cmd, check=True)
 

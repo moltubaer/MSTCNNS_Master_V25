@@ -104,7 +104,7 @@ for ran_id, packet_list in packets_by_id.items():
         })
 
 # === Write to CSV ===
-print(f"[INFO] Writing results to {output_csv}")
+# print(f"[INFO] Writing results to {output_csv}")
 os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
 with open(output_csv, "w", newline="") as csvfile:

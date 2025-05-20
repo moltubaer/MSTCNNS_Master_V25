@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description="Parse messages using specified NF 
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
-parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf, pcf")
+parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf")
 parser.add_argument("--core", required=True, type=str, help="Core name: free5gc, open5gs, aether")
 args = parser.parse_args()
 
@@ -24,16 +24,21 @@ output_csv = f"{args.output}/{input_file}.csv"
 
 # === Deregistration regex patterns ===
 pattern_udm = [
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
     # Open5GS
-    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
-    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
+    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"\d+"\},\s*"purgeFlag"\s*:\s*true\}',re.IGNORECASE),
+    re.compile(r'\[\s*\{"op"\s*:\s*"replace",\s*"path"\s*:\s*"?PurgeFlag"?,\s*"value"\s*:\s*true\}\s*\]',re.IGNORECASE),
+    # re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
+    # re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
     # Free5GC
-
+    re.compile(r'grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr.*?targetNfType=UDR', re.IGNORECASE),
+    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"[a-zA-Z0-9]+"\},\s*"purgeFlag"\s*:\s*true\}', re.IGNORECASE),
     # Aether
 
 ]
 
-pattern_pcf = [
+pattern_smf = [
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
     # Open5GS
     # No identifiable messages
     # Free5GC
@@ -48,12 +53,12 @@ use_imsi_id = False
 # === Select Pattern Set ===
 pattern_matrix = {
     ("udm", "free5gc"): (pattern_udm, True),
-    ("pcf", "free5gc"): (pattern_pcf, True),
+    ("smf", "free5gc"): (pattern_smf, True),
     ("udm", "open5gs"): (pattern_udm, True),
-    ("pcf", "open5gs"): (pattern_pcf, True),
+    ("smf", "open5gs"): (pattern_smf, True),
     # ("udm", "aether"): (pattern_udm, True),
     # ("smf", "aether"): (pattern_smf, True),
-    # ("pcf", "aether"): (pattern_pcf, True),
+    # ("smf", "aether"): (pattern_smf, True),
 }
 
 try:
@@ -61,7 +66,7 @@ try:
 except KeyError:
     raise ValueError(f"Unsupported combination: pattern={args.pattern}, core={args.core}")
 
-print(patterns)
+# print(patterns)
 
 # === Decode TCP Payload ===
 def decode_payload(hex_str):
@@ -99,7 +104,8 @@ def extract_ids(text):
 
 # === Process PCAP JSON ===
 events = []
-pattern_counters = {0: 1, 1: 1}
+# pattern_counters = {0: 1, 1: 1}
+pattern_counters = {i: 1 for i in range(len(patterns))}
 
 with open(os.path.join(path, input_file), "r") as f:
     packets = json.load(f)

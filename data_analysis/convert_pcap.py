@@ -9,31 +9,32 @@ NF_FILTERS = {
         "amf": {"filter": "kafka", "format": "json"},
         "ausf": {"filter": "tcp", "format": "json"},
         "smf": {"filter": "tcp", "format": "json"},
-        "nssf": {"filter": "tcp", "format": "json"},
         "pcf": {"filter": "tcp", "format": "json"},
         "upf": {"filter": "tcp", "format": "json"},
+        "udm": {"filter": "tcp", "format": "json"},
     },
     "open5gs": {
         "amf": {"filter": "ngap", "format": "pdml"},
         "ausf": {"filter": "tcp", "format": "json"},
         "smf": {"filter": "tcp", "format": "json"},
-        "nssf": {"filter": "tcp", "format": "json"},
         "pcf": {"filter": "tcp", "format": "json"},
         "upf": {"filter": "tcp", "format": "json"},
+        "udm": {"filter": "tcp", "format": "json"},
     },
     "free5gc": {
         "amf": {"filter": "ngap", "format": "pdml"},
         "ausf": {"filter": "tcp", "format": "json"},
         "smf": {"filter": "tcp", "format": "json"},
-        "nssf": {"filter": "tcp", "format": "json"},
         "pcf": {"filter": "tcp", "format": "json"},
         "upf": {"filter": "tcp", "format": "json"},
+        "udm": {"filter": "tcp", "format": "json"},
     }
 }
 
 def extract_nf(file_name: str) -> str:
     name = file_name.lower()
-    for nf in ["amf", "ausf", "udm", "smf", "pcf", "nrf", "bsf", "scp", "nssf", "udr", "upf"]:
+    # for nf in ["amf", "ausf", "udm", "smf", "pcf", "nrf", "bsf", "scp", "nssf", "udr", "upf"]:
+    for nf in ["amf", "ausf", "udm", "smf", "pcf", "nssf", "upf"]:
         if f"_{nf}_" in name or name.startswith(f"{nf}_") or name.endswith(f"_{nf}") or f"-{nf}-" in name or f"-{nf}_" in name or f"_{nf}-" in name or name.startswith(f"{nf}-"):
             return nf
     if "ueransim" in name:
@@ -71,6 +72,9 @@ def convert_pcap_recursive(root_dir: str, core: str):
                 subfolder = "macro_data"
 
             elif nf_type:
+                if nf_type not in NF_FILTERS[core]:
+                    print(f"[SKIP] NF '{nf_type}' not in allowed filters for core '{core}': {file}")
+                    continue
                 nf_config = NF_FILTERS[core][nf_type]
                 tshark_format = nf_config["format"]
                 display_filter = nf_config["filter"]
@@ -85,10 +89,7 @@ def convert_pcap_recursive(root_dir: str, core: str):
 
             output_filename = f"{base_filename}{output_ext}"
 
-            # Path 1: Save next to original pcap
-            same_dir_output = os.path.join(dirpath, output_filename)
-
-            # Path 2: Save one level up, in named subfolder
+            # Save one level up, in named subfolder
             parent_dir = os.path.dirname(dirpath)
             target_dir = os.path.join(parent_dir, subfolder, target_subdir_name)
             os.makedirs(target_dir, exist_ok=True)
@@ -125,10 +126,9 @@ def convert_pcap_recursive(root_dir: str, core: str):
                 else:
                     print(f"[OK] Converted: {input_path} -> {output_filename}")
 
-                # Save to both locations
-                with open(same_dir_output, "w") as f1, open(one_up_output, "w") as f2:
-                    f1.write(output_data)
-                    f2.write(output_data)
+                # Save only to target subfolder (micro_data or macro_data)
+                with open(one_up_output, "w") as f:
+                    f.write(output_data)
 
             except Exception as e:
                 print(f"[FAIL] {input_path}: {e}")
