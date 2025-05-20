@@ -1,9 +1,8 @@
 import json
 import os
 
-path = "../data/core_ue_reg_100/"
-input_file = "udm_ue_reg"
-output_file = input_file + ".decoded.txt"
+path = "/mnt/c/Dev/master/pcap_captures/open5gs_19.05.2025_captures/micro_data/100_linear_pdu_rel_open5gs_2025.05.19_12.58/open5gs_udm.json"
+output_file = os.path.basename(path) + ".decoded.txt"
 
 # Improved cleaner
 def decode_payload(hex_str):
@@ -21,7 +20,7 @@ def decode_payload(hex_str):
 # Ensure output directory exists
 os.makedirs("tmp", exist_ok=True)
 
-with open(path + input_file + ".json", "r") as f:
+with open(path, "r") as f:
     packets = json.load(f)
 
 with open("tmp/" + output_file, "w", encoding="utf-8") as out:

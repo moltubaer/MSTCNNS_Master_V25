@@ -33,7 +33,6 @@ SCRIPT_MAP = {
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
             "udm": {".json": ["ue_dereg.py"]},
-            # "pcf": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},
@@ -45,7 +44,6 @@ SCRIPT_MAP = {
             "amf": {".pdml": ["pdu_rel_ngap.py"]},
             "pcf": {".json": ["pdu_rel_json.py"]},
             "smf": {".json": ["pdu_rel_json.py"]},
-            "udm": {".json": ["pdu_rel_json.py"]},
         },
     },
     "free5gc": {
@@ -58,7 +56,7 @@ SCRIPT_MAP = {
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
             "udm": {".json": ["ue_dereg.py"]},
-            # "pcf": {".json": ["ue_dereg.py"]},
+            "pcf": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},
@@ -120,7 +118,6 @@ def detect_and_run(base_dir, output_dir):
 
                 # Build command
                 cmd = ["python3", script, "--input", input_dir, "--name", input_file, "--output", str(out_subdir)]
-                print(cmd)
                 
                 # If the script requires a pattern (like ue_reg_json.py), pass nf
                 # if "ue_reg_json.py" in script:
@@ -131,7 +128,9 @@ def detect_and_run(base_dir, output_dir):
                 #     cmd += ["--pattern", nf]
 
                 cmd += ["--pattern", nf]
+                cmd += ["--core", core]
 
+                print(cmd)
 
                 subprocess.run(cmd, check=True)
 

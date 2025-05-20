@@ -12,6 +12,8 @@ parser = argparse.ArgumentParser(description="Parse messages using specified NF 
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
+parser.add_argument("--pattern", "-p", type=str)
+parser.add_argument("--core", "-c", type=str)
 args = parser.parse_args()
 
 # === Input/Output ===
@@ -25,7 +27,7 @@ FIRST_PROCEDURE_CODE = "46"  # Uplink NAS Transport
 RELEASE_PROCEDURE_CODE = "29"  # PDU Session Resource Setup Request
 
 # === Parse PDML ===
-tree = ET.parse(path + input_file + ".pdml")
+tree = ET.parse(os.path.join(path, input_file))
 root = tree.getroot()
 
 # === Extract Relevant Packet Info ===
@@ -63,7 +65,7 @@ for packet in root.findall("packet"):
         pdu_type = current_pdu_types[idx] if idx < len(current_pdu_types) else (current_pdu_types[-1] if current_pdu_types else None)
 
         output.append((ran_id, frame_number, timestamp, proc_code, pdu_type))
-        print(f"[DEBUG] Frame {frame_number}: ran_id={ran_id}, procedureCode={proc_code}, pdu_type={pdu_type}")
+        # print(f"[DEBUG] Frame {frame_number}: ran_id={ran_id}, procedureCode={proc_code}, pdu_type={pdu_type}")
 
 # === Organize by RAN UE NGAP ID ===
 packets_by_id = defaultdict(list)
