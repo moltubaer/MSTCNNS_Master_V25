@@ -17,7 +17,7 @@ interval = 0.2
 outdir = "/home/ubuntu/pcap_captures"
 # outdir = "."
 os.makedirs(outdir, exist_ok=True)
-outfile = os.path.join(outdir, datetime.now().strftime("%Y.%m.%d_%H:%M")+"_system.csv")
+outfile = os.path.join(outdir, datetime.now().strftime("%Y.%m.%d_%H.%M")+"_system.csv")
 num_cores = psutil.cpu_count()
 
 # Warm up: let psutil collect initial CPU stats
