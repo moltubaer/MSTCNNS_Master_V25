@@ -26,5 +26,5 @@ generate_open5gs_ue_configs(
     output_dir='/home/ubuntu/UERANSIM/config/tests-ue-with-pdu',
     start_index=1,
     end_index=1000,
-    base_imsi_str="001010000000010"
+    base_imsi_str="001010000000001"
 )
