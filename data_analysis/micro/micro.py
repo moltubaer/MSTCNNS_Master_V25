@@ -22,7 +22,8 @@ SCRIPT_MAP = {
         },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
-            "udm": {".json": ["ue_dereg.py"]},
+            "udm": {".json": ["ue_dereg_pdu.py"]},
+            # "udm": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},
@@ -52,7 +53,8 @@ SCRIPT_MAP = {
         },
         "ue_dereg": {
             "amf": {".pdml": ["ue_dereg_ngap.py"]},
-            "udm": {".json": ["ue_dereg.py"]},
+            "udm": {".json": ["ue_dereg_pdu.py"]},
+            # "udm": {".json": ["ue_dereg.py"]},
         },
         "pdu_est": {
             "amf": {".pdml": ["pdu_est_ngap.py"]},

@@ -13,6 +13,7 @@ CORE_NAME_MAP = {
 }
 
 OP_NAME_MAP = {
+    "ue_reg_pdu": "UE Registration with PDU Session Establishment",
     "ue_reg": "UE Registration",
     "ue_dereg": "UE Deregistration",
     "pdu_est": "PDU Session Establishment",
