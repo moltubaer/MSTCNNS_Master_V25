@@ -13,6 +13,7 @@ ue_count=1
 mode=""
 test_script=""
 core=""
+mean_delay=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -37,6 +38,10 @@ while [[ "$#" -gt 0 ]]; do
             core="$2"
             shift 2
             ;;
+        --mean-delay)
+            mean_delay="$2"
+            shift 2
+            ;;
         *)
             echo "❌ Unknown argument: $1"
             exit 1
@@ -54,6 +59,7 @@ echo "[*] Capture duration set to $duration seconds."
 echo "[*] UE count set to $ue_count."
 echo "[*] Mode set to $mode."
 echo "[*] Test script set to $test_script."
+echo "[*] Mean delay set to $mean_delay."
 
 # ===
 # CONFIGURATION
@@ -64,7 +70,7 @@ host_interface="enp2s0"
 timestamp=$(date +%Y.%m.%d_%H.%M)
 current_date=$(date +%d.%m.%Y)
 
-output_dir="/home/ubuntu/pcap_captures/${core}_${current_date}_captures/${ue_count}_UEs_ueransim_${core}_${test_script}_${mode}_${timestamp}"
+output_dir="/home/ubuntu/pcap_captures/${core}_${current_date}_captures/${ue_count}_UEs_ueransim_${core}_${mean_delay}_${test_script}_${mode}_${timestamp}"
 mkdir -p "$output_dir"
 
 pids=()
@@ -78,7 +84,7 @@ echo "[*] Starting metrics capture for $duration seconds..."
 python3 /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/capture_with_metrics.py --duration "$duration" &
 
 # Start tcpdump on host
-host_capture="$output_dir/${ue_count}_${core}_${mode}_${test_script}_ueransim_capture.pcap"
+host_capture="$output_dir/${ue_count}_${core}_${mode}_${mean_delay}_${test_script}_ueransim_capture.pcap"
 echo "[+] Starting tcpdump on host interface: $host_interface"
 sudo timeout "$duration" tcpdump -tttt -i "$host_interface" -w "$host_capture" > "$output_dir/ueransim_tcpdump.log" 2>&1 &
 pids+=($!)

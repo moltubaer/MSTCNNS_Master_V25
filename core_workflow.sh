@@ -91,7 +91,7 @@ capture_pid=$!  # Capture the PID of the capture process
 
 # Start the UERANSIM capture script
 echo "[*] Starting UERANSIM capture script..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh --duration $CAPTURE_DURATION --ue-count $UE_COUNT --mode $MODE --test $TEST_SCRIPT_NAME --core $CORE > /tmp/ueransim_logs/${CORE}_${UE_COUNT}_${TEST_SCRIPT}_${MODE}_${current_date}_ueransim_capture.log 2>&1" &
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup bash /home/ubuntu/MSTCNNS_Master_V25/capture_scripts/ueransim_capture.sh --duration $CAPTURE_DURATION --ue-count $UE_COUNT --mode $MODE --test $TEST_SCRIPT_NAME --core $CORE --mean-delay $MEAN_DELAY > /tmp/ueransim_logs/${CORE}_${UE_COUNT}_${TEST_SCRIPT}_${MODE}_${current_date}_ueransim_capture.log 2>&1" &
 ueransim_capture_pid=$!  # Capture the PID of the UERANSIM capture process
 # Wait for a short delay to ensure the capture script starts
 echo "[*] Waiting for 10 seconds to ensure capture starts..."
@@ -99,7 +99,7 @@ sleep 10
 
 # Start the selected test script on the UERANSIM machine
 echo "[*] Starting $TEST_SCRIPT on the UERANSIM machine..."
-ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ue_logs/${CORE}_${UE_COUNT}_${TEST_SCRIPT}_${MODE}_${current_date}_ues_output.log 2>&1" &
+ssh -tt -i "$UERANSIM_KEY" "$UERANSIM_CONNECTION" "nohup python3 /home/ubuntu/MSTCNNS_Master_V25/test_scripts/$TEST_SCRIPT --count $UE_COUNT --core $CORE --mode $MODE --duration $DURATION --mean-delay $MEAN_DELAY > /tmp/ue_logs/${CORE}_${UE_COUNT}_${TEST_SCRIPT}_${MEAN_DELAY}_${MODE}_${current_date}_ues_output.log 2>&1" &
 ues_pid=$!  # Capture the PID of the UERANSIM process
 
 

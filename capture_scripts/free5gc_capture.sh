@@ -10,6 +10,7 @@ duration=5
 ue_count=100
 test_script_name="default_test"
 mode="default_mode"
+mean_delay=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -30,6 +31,10 @@ while [[ "$#" -gt 0 ]]; do
             mode="$2"
             shift 2
             ;;
+        --mean-delay)
+            mean_delay="$2"
+            shift 2
+            ;;
         *)
             echo "❌ Unknown argument: $1"
             exit 1
@@ -47,6 +52,7 @@ echo "⏱️  Capture duration: ${duration}s"
 echo "[*] UE count set to $ue_count."
 echo "[*] Test script name set to $test_script_name."
 echo "[*] Mode set to $mode."
+echo "[*] Mean delay set to $mean_delay."
 
 # ===
 # CONFIGURATION
@@ -59,11 +65,9 @@ containers=(
     free5gc_nrf
 )
 
-# Output directory for pcap files
 timestamp=$(date +%Y.%m.%d_%H.%M)
 current_date=$(date +%d.%m.%Y)
-
-output_dir="/home/ubuntu/pcap_captures/free5gc_${current_date}_captures/${ue_count}_${mode}_${test_script_name}_free5gc_${timestamp}"
+output_dir="/home/ubuntu/pcap_captures/free5gc_${current_date}_captures/${ue_count}_${mode}_${mean_delay}_${test_script_name}_free5gc_${timestamp}"
 mkdir -p "$output_dir"
 
 declare -a pids

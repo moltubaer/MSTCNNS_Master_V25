@@ -9,6 +9,7 @@ duration=120
 ue_count=100
 test_script_name="default_test"
 mode="default_mode"
+mean_delay=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -29,6 +30,10 @@ while [[ "$#" -gt 0 ]]; do
             mode="$2"
             shift 2
             ;;
+        --mean-delay)
+            mean_delay="$2"
+            shift 2
+            ;;
         *)
             echo "❌ Unknown argument: $1"
             exit 1
@@ -46,6 +51,7 @@ echo "[*] Capture duration set to $duration seconds."
 echo "[*] UE count set to $ue_count."
 echo "[*] Test script name set to $test_script_name."
 echo "[*] Mode set to $mode."
+echo "[*] Mean delay set to $mean_delay."
 
 # ===
 # find right names of aether pods (NF's)
@@ -118,8 +124,10 @@ pod_interface="eth0"
 host_interface="enp2s0"
 
 timestamp=$(date +%Y.%m.%d_%H.%M)
-host_output_dir="/home/ubuntu/pcap_captures/${ue_count}_${mode}_${test_script_name}_aether_${timestamp}"
-host_pcap_path="$host_output_dir/${ue_count}_${mode}_${test_script_name}_host_capture.pcap"
+current_date=$(date +%d.%m.%Y)
+
+host_output_dir="/home/ubuntu/pcap_captures/aether_${current_date}/${ue_count}_${mode}_${mean_delay}_${test_script_name}_aether_${timestamp}"
+host_pcap_path="$host_output_dir/${ue_count}_${mode}_${mean_delay}_${test_script_name}_host_capture.pcap"
 mkdir -p "$host_output_dir/logs"
 
 # ===
