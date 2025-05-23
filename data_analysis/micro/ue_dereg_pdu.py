@@ -3,28 +3,57 @@ import re
 import os
 import csv
 import argparse
-from collections import defaultdict
 
-# PDU Session Release
+# UE Deregistration
+#   UDM
 
 # === CLI Argument ===
 parser = argparse.ArgumentParser(description="Parse messages using specified NF pattern set")
 parser.add_argument("--name", "-n", required=True, type=str)
 parser.add_argument("--input", "-i", type=str, help="Input directory")
 parser.add_argument("--output", "-o", default=".csv", type=str)
-parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf, pcf")
+parser.add_argument("--pattern", required=True, type=str, help="Network Function: udm, smf")
 parser.add_argument("--core", required=True, type=str, help="Core name: free5gc, open5gs, aether")
 args = parser.parse_args()
 
 # === Input/Output ===
-# path = "../data/linear/open5gs/pdu_rel"
+# path = "../data/linear/open5gs/ue_dereg"
 path = args.input
-input_file = args.name  # 100.smf.pdu_rel.json
+input_file = args.name  # 100.udm.ue_dereg.json
 output_csv = f"{args.output}/{input_file}.csv"
 
+# === Deregistration regex patterns ===
+pattern_udm = [
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # Open5GS
+    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"\d+"\},\s*"purgeFlag"\s*:\s*true\}',re.IGNORECASE),
+    re.compile(r'\[\s*\{"op"\s*:\s*"replace",\s*"path"\s*:\s*"?PurgeFlag"?,\s*"value"\s*:\s*true\}\s*\]',re.IGNORECASE),
+    # re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
+    # re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
+    # Free5GC
+    re.compile(r'grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr.*?targetNfType=UDR', re.IGNORECASE),
+    re.compile(r'\{"guami"\s*:\s*\{"plmnId"\s*:\s*\{"mcc"\s*:\s*"\d{3}",\s*"mnc"\s*:\s*"\d{2,3}"\},\s*"amfId"\s*:\s*"[a-zA-Z0-9]+"\},\s*"purgeFlag"\s*:\s*true\}', re.IGNORECASE),
+    # Aether
 
-# === Pattern Definitions ===
+
+    # Open5GS
+    # No identifiable messages
+    # Free5GC
+    re.compile(r"grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr", re.IGNORECASE),
+    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
+    # Aether
+
+]
+
 pattern_smf = [
+    re.compile(r"(imsi-\d{5,15}|suci-\d+(?:-\d+){5,})", re.IGNORECASE),
+    # Open5GS
+    # No identifiable messages
+    # Free5GC
+    re.compile(r'"purgeFlag"\s*:\s*true', re.IGNORECASE),
+    re.compile(r'\{"op":"replace","path":"PurgeFlag","value":true\}'),
+    # Aether
+
     # Open5GS
     re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\}\}'),
     re.compile(r'\{"n1SmMsg":\{"contentId":"5gnas-sm"\},"n2SmInfo":\{"contentId":"ngap-sm"\},"n2SmInfoType":"PDU_RES_REL_CMD"\}'),
@@ -46,15 +75,6 @@ pattern_pcf = [
 
 ]
 
-pattern_udm = [
-    # Open5GS
-    # No identifiable messages
-    # Free5GC
-    re.compile(r"grant_type=client_credentials.*?nfType=UDM.*?scope=nudr-dr", re.IGNORECASE),
-    re.compile(r'\{.*?"access_token"\s*:\s*".+?".*?"scope"\s*:\s*"nudr-dr".*?\}', re.IGNORECASE),
-    # Aether
-
-]
 
 use_imsi_id = False
 

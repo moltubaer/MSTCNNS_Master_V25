@@ -93,7 +93,7 @@ def plot_stacked_nf_bars(nf_data, output_path, title):
         return
 
     plt.xticks(x, ue_counts)
-    plt.xlabel("Test Number")
+    plt.xlabel("UE Count")
     plt.ylabel("Total Processing Time (ms)")
     plt.title(title)
     plt.legend()

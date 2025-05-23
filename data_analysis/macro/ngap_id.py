@@ -21,6 +21,7 @@ FILENAME_TEST_MAP = {
     "ue_dereg": "ue_dereg",
     "pdu_sessions": "pdu_est",
     "pdu_release": "pdu_rel",
+    "ue_reg_pdu": "ue_reg_pdu",
     "ue_reg": "ue_reg",
     "ue_dereg": "ue_dereg",
     "pdu_est": "pdu_est",
@@ -29,7 +30,9 @@ FILENAME_TEST_MAP = {
 
 # NGAP procedure mapping
 PROCEDURE_CODE_MAP = {
+    "ue_reg_pdu":    {"first": "15", "release": "29"},    # ue_reg_pdu
     "ue_reg":    {"first": "15", "release": "14"},
+    # "ue_dereg_pdu":  {"first": "46", "release": "41"},
     "ue_dereg":  {"first": "46", "release": "41"},
     "pdu_est":   {"first": "46", "release": "29"},
     "pdu_rel":   {"first": "46", "release": "28"},
