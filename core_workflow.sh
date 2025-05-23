@@ -86,7 +86,7 @@ echo "[*] Calculated capture duration: $CAPTURE_DURATION seconds"
 
 # Start the core capture script
 echo "[*] Starting capture script on the $CORE core machine for $CAPTURE_DURATION seconds..."
-ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT --test-script-name $TEST_SCRIPT_NAME --mode $MODE > /tmp/capture.log 2>&1" &
+ssh -tt -i "$CORE_KEY" "$CORE_CONNECTION" "source ~/.profile && bash $CORE_CAPTURE_SCRIPT --duration $CAPTURE_DURATION --ue-count $UE_COUNT --test-script-name $TEST_SCRIPT_NAME --mode $MODE --mean-delay $MEAN_DELAY > /tmp/capture.log 2>&1" &
 capture_pid=$!  # Capture the PID of the capture process
 
 # Start the UERANSIM capture script
