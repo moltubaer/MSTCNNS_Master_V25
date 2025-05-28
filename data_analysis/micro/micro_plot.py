@@ -12,9 +12,9 @@ PRETTY_NAMES = {
         "aether": "Aether"
     },
     "operation": {
-        "ue_reg": "UE Registration",
+        "ue_reg": "UE Registration with PDU Session Establishment",
         "ue_reg_pdu": "UE Registration with PDU Session Establishment",
-        "ue_dereg": "UE Deregistration",
+        "ue_dereg": "UE Deregistration with PDU Session Release",
         "pdu_est": "PDU Session Establishment",
         "pdu_rel": "PDU Session Release"
     }
@@ -58,9 +58,13 @@ def collect_nf_data_from_folder(folder_path, test_number):
             nf_data[key] = nf_data.get(key, 0) + df["delta_ms"].sum()
     return nf_data
 
-def plot_stacked_nf_bars(nf_data, output_path, title):
+def plot_nf_bars(nf_data, output_path, title, side=False):
     ue_counts = sorted(set(k[0] for k in nf_data))
     nf_names = sorted(set(k[1] for k in nf_data))
+
+    if not ue_counts or not nf_names:
+        print(f"[SKIP] No data to plot for: {title}")
+        return
 
     stacks = {nf: [] for nf in nf_names}
     for ue_count in ue_counts:
@@ -68,31 +72,27 @@ def plot_stacked_nf_bars(nf_data, output_path, title):
             stacks[nf].append(nf_data.get((ue_count, nf), 0))
 
     x = np.arange(len(ue_counts))
-    bar_width = 0.6
-    bottom = np.zeros(len(ue_counts))
-
     plt.figure(figsize=(10, 6))
 
-    max_total_height = np.zeros(len(ue_counts))
-    added_labels = set()
-    plotted_any = False
+    if side:
+        total_bars = len(nf_names)
+        if total_bars == 0:
+            print(f"[SKIP] No NFs found for: {title}")
+            return
+        width = 0.8 / total_bars
+        for i, nf in enumerate(nf_names):
+            values = stacks[nf]
+            offset = x + i * width - (total_bars - 1) * width / 2
+            plt.bar(offset, values, width=width, label=nf)
+        plt.xticks(x, ue_counts)
+    else:
+        bottom = [0] * len(ue_counts)
+        for nf in nf_names:
+            values = stacks[nf]
+            plt.bar(x, values, bottom=bottom, label=nf)
+            bottom = [i + j for i, j in zip(bottom, values)]
+        plt.xticks(x, ue_counts)
 
-    for nf in nf_names:
-        values = np.array(stacks[nf])
-        if values.sum() > 0:
-            label = nf if nf not in added_labels else None
-            plt.bar(x, values, width=bar_width, bottom=bottom, label=label)
-            added_labels.add(nf)
-            bottom += values
-            max_total_height = np.maximum(max_total_height, bottom)
-            plotted_any = True
-
-    if not plotted_any:
-        print(f"Skipping empty plot: {title}")
-        plt.close()
-        return
-
-    plt.xticks(x, ue_counts)
     plt.xlabel("UE Count")
     plt.ylabel("Total Processing Time (ms)")
     plt.title(title)
@@ -100,7 +100,8 @@ def plot_stacked_nf_bars(nf_data, output_path, title):
     plt.grid(axis='y', linestyle='--', alpha=0.5)
     plt.tight_layout()
     plt.savefig(output_path)
-    print(f"Plot saved to: {output_path}")
+    plt.close()
+    print(f"[OK] Plot saved to: {output_path}")
 
 def write_data_csv(nf_data, csv_output_path):
     ue_counts = sorted(set(k[0] for k in nf_data))
@@ -128,7 +129,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Automatically generate NF plots per operation/core.")
     parser.add_argument("--input", "-i", required=True, help="Root input directory containing test folders.")
     parser.add_argument("--output", "-o", default="./plots", help="Output directory for plots and CSVs.")
+    parser.add_argument("--side", action="store_true", help="Display NFs side by side instead of stacked")
+    parser.add_argument("--ms", required=True, type=str)
     args = parser.parse_args()
+
+    ms = args.ms
 
     groups = defaultdict(list)  # (operation, core) -> list of (folder_path, test_number)
 
@@ -152,9 +157,14 @@ if __name__ == "__main__":
         pretty_op = PRETTY_NAMES["operation"].get(operation.lower(), operation.replace("_", " ").title())
         basename = f"{pretty_core} - {pretty_op}".replace(" ", "_")
 
-        plot_path = os.path.join(args.output, f"{basename}.png")
-        csv_path = os.path.join(args.output, f"{basename}.csv")
-        title = f"{pretty_core} - {pretty_op}"
+        if args.side:
+            plot_path = os.path.join(args.output, f"{basename}_side.png")
+            csv_path = os.path.join(args.output, f"{basename}_side.csv")
+            title = f"{pretty_core} - {pretty_op} - {ms} ms"
+        else:
+            plot_path = os.path.join(args.output, f"{basename}.png")
+            csv_path = os.path.join(args.output, f"{basename}.csv")
+            title = f"{pretty_core} - {pretty_op} - {ms} ms"
 
-        plot_stacked_nf_bars(combined_data, plot_path, title)
+        plot_nf_bars(combined_data, plot_path, title, side=args.side)
         write_data_csv(combined_data, csv_path)
