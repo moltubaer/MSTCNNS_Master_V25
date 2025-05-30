@@ -3,40 +3,44 @@ import matplotlib.pyplot as plt
 import argparse
 import numpy as np
 import os
-
 from matplotlib.lines import Line2D
 
-def parse_title_and_output_from_filename(filepath, input_root, output_root):
+def parse_title_and_output_from_filename(filepath, output_root):
     base = os.path.basename(filepath)
     name, _ = os.path.splitext(base)
     parts = name.split('_')
 
     if len(parts) < 6:
         title = "Time Series Dot Plot"
-    else:
-        num_ues = parts[0]
-        framework = parts[1].capitalize()
-        interval = parts[3]
-        action = parts[4:6]
+        output_file = os.path.join(output_root, name + "_plot.png")
+        return title, output_file
 
-        try:
-            interval_ms = int(float(interval) * 1000)
-        except ValueError:
-            interval_ms = interval
+    # Extract elements
+    num_ues = parts[0]
+    framework = parts[1].capitalize()
+    interval = parts[3]
+    action_key = '_'.join(parts[4:6])  # e.g. ue_reg_pdu
 
-        action_map = {
-            ('ue', 'reg'): "UE Registration",
-            ('ue', 'dereg'): "UE Deregistration",
-            ('ue', 'reg_pdu'): "UE Registration With PDU Session Establishment",
-            ('ue', 'dereg_pdu'): "UE Deregistration With PDU Session Release"
-        }
-        action_label = action_map.get(tuple(action), ' '.join(map(str.capitalize, action)))
-        title = f"{framework} - {action_label} - {num_ues} UEs - {interval_ms} ms"
+    # Friendly label
+    action_map = {
+        'ue_reg': "UE Registration",
+        'ue_dereg': "UE Deregistration",
+        'ue_reg_pdu': "UE Registration With PDU Session Establishment",
+        'ue_dereg_pdu': "UE Deregistration With PDU Session Release"
+    }
+    try:
+        interval_ms = int(float(interval) * 1000)
+    except ValueError:
+        interval_ms = interval
 
-    # Correct relative output path
-    rel_path = os.path.relpath(filepath, start=input_root)
-    rel_dir = os.path.dirname(rel_path)
-    output_dir = os.path.join(output_root, rel_dir)
+    action_label = action_map.get(action_key, action_key.replace('_', ' ').title())
+    title = f"{framework} - {action_label} - {num_ues} UEs - {interval_ms} ms"
+
+    # Determine output path
+    core = parts[1].lower()
+    action_dir = action_key.lower()
+
+    output_dir = os.path.join(output_root, core, action_dir)
     os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, f"{name}_plot.png")
 
@@ -76,13 +80,13 @@ def plot_csv(input_file, output_file, title):
 
     legend_elements = []
     if has_first:
-        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='first',
+        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='Request',
                                       markerfacecolor='green', markersize=6))
     if has_release:
-        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='release',
+        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='Response',
                                       markerfacecolor='red', markersize=6))
     if has_other:
-        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='other',
+        legend_elements.append(Line2D([0], [0], marker='o', color='w', label='Other',
                                       markerfacecolor='purple', markersize=6))
 
     ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.25),
@@ -98,7 +102,7 @@ def process_directory(input_dir, output_dir):
         for file in files:
             if file.endswith('.csv'):
                 input_path = os.path.join(root, file)
-                title, output_path = parse_title_and_output_from_filename(input_path, input_dir, output_dir)
+                title, output_path = parse_title_and_output_from_filename(input_path, output_dir)
                 try:
                     plot_csv(input_path, output_path, title)
                 except Exception as e:
