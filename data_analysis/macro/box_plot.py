@@ -131,16 +131,26 @@ def plot_grouped_box(core_data_dict, op_title, output_img, logy=False):
 def write_stats_csv(core_data, output_path_csv):
     with open(output_path_csv, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Label', 'Count', 'Min', 'Max', 'Mean', 'Median', 'P90', 'Outliers', 'Outlier %'])
+        writer.writerow([
+            'Label', 'Count', 'Min', 'Max', 'Mean', 'Median',
+            'Q1', 'Q3', 'IQR',
+            'Lower Whisker', 'Upper Whisker',
+            'Lower Outliers', 'Upper Outliers', 'Total Outliers', 'Outlier %'
+        ])
         for label, data in core_data.items():
             if data:
                 arr = np.array(data)
                 q1 = np.percentile(arr, 25)
                 q3 = np.percentile(arr, 75)
                 iqr = q3 - q1
-                upper_bound = q3 + 1.5 * iqr
-                outliers = np.sum(arr > upper_bound)
-                outlier_pct = (outliers / len(arr)) * 100
+                lower_whisker = q1 - 1.5 * iqr
+                upper_whisker = q3 + 1.5 * iqr
+
+                lower_outliers = np.sum(arr < lower_whisker)
+                upper_outliers = np.sum(arr > upper_whisker)
+                total_outliers = lower_outliers + upper_outliers
+                outlier_pct = (total_outliers / len(arr)) * 100
+
                 writer.writerow([
                     label,
                     len(arr),
@@ -148,11 +158,43 @@ def write_stats_csv(core_data, output_path_csv):
                     f"{np.max(arr):.3f}",
                     f"{np.mean(arr):.3f}",
                     f"{np.median(arr):.3f}",
-                    f"{np.percentile(arr, 90):.3f}",
-                    outliers,
+                    f"{q1:.3f}",
+                    f"{q3:.3f}",
+                    f"{iqr:.3f}",
+                    f"{lower_whisker:.3f}",
+                    f"{upper_whisker:.3f}",
+                    lower_outliers,
+                    upper_outliers,
+                    total_outliers,
                     f"{outlier_pct:.2f}"
                 ])
-    print(f"[OK] Stats saved: {output_path_csv}")
+    print(f"[OK] Extended stats saved: {output_path_csv}")
+
+# def write_stats_csv(core_data, output_path_csv):
+#     with open(output_path_csv, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(['Label', 'Count', 'Min', 'Max', 'Mean', 'Median', 'P90', 'Outliers', 'Outlier %'])
+#         for label, data in core_data.items():
+#             if data:
+#                 arr = np.array(data)
+#                 q1 = np.percentile(arr, 25)
+#                 q3 = np.percentile(arr, 75)
+#                 iqr = q3 - q1
+#                 upper_bound = q3 + 1.5 * iqr
+#                 outliers = np.sum(arr > upper_bound)
+#                 outlier_pct = (outliers / len(arr)) * 100
+#                 writer.writerow([
+#                     label,
+#                     len(arr),
+#                     f"{np.min(arr):.3f}",
+#                     f"{np.max(arr):.3f}",
+#                     f"{np.mean(arr):.3f}",
+#                     f"{np.median(arr):.3f}",
+#                     f"{np.percentile(arr, 90):.3f}",
+#                     outliers,
+#                     f"{outlier_pct:.2f}"
+#                 ])
+#     print(f"[OK] Stats saved: {output_path_csv}")
 
 def main(input_root, output_root, grouped=False, logy=False):
     suffix = "_logy" if logy else ""

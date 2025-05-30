@@ -3,6 +3,7 @@ import re
 import csv
 import pandas as pd
 import numpy as np
+from scipy.stats import skew, kurtosis
 import matplotlib.pyplot as plt
 
 CORE_NAME_MAP = {
@@ -34,16 +35,50 @@ def plot_cdf(data, label, logx=False):
     plt.plot(sorted_data, yvals, label=label)
 
 def write_percentiles_csv(core_data, output_path_csv):
-    percentiles = [50, 90, 99]
     with open(output_path_csv, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Label', 'p50 (ms)', 'p90 (ms)', 'p99 (ms)'])
+        writer.writerow([
+            'Label', 'Count', 'Min', 'Max', 'Mean', 'StdDev',
+            'p10', 'p25', 'p50', 'p75', 'p90', 'p95', 'p99',
+            'Skewness', 'Kurtosis',
+            '% >100ms', '% >200ms'
+        ])
         for label, data in core_data.items():
-            if data:
-                p50 = np.percentile(data, 50)
-                p90 = np.percentile(data, 90)
-                p99 = np.percentile(data, 99)
-                writer.writerow([label, f"{p50:.3f}", f"{p90:.3f}", f"{p99:.3f}"])
+            if not data:
+                continue
+            arr = np.array(data)
+            writer.writerow([
+                label,
+                len(arr),
+                f"{np.min(arr):.3f}",
+                f"{np.max(arr):.3f}",
+                f"{np.mean(arr):.3f}",
+                f"{np.std(arr):.3f}",
+                f"{np.percentile(arr, 10):.3f}",
+                f"{np.percentile(arr, 25):.3f}",
+                f"{np.percentile(arr, 50):.3f}",
+                f"{np.percentile(arr, 75):.3f}",
+                f"{np.percentile(arr, 90):.3f}",
+                f"{np.percentile(arr, 95):.3f}",
+                f"{np.percentile(arr, 99):.3f}",
+                f"{skew(arr):.3f}",
+                f"{kurtosis(arr):.3f}",
+                f"{np.sum(arr > 100) / len(arr) * 100:.2f}",
+                f"{np.sum(arr > 200) / len(arr) * 100:.2f}",
+            ])
+
+
+# def write_percentiles_csv(core_data, output_path_csv):
+#     percentiles = [50, 90, 99]
+#     with open(output_path_csv, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(['Label', 'p50 (ms)', 'p90 (ms)', 'p99 (ms)'])
+#         for label, data in core_data.items():
+#             if data:
+#                 p50 = np.percentile(data, 50)
+#                 p90 = np.percentile(data, 90)
+#                 p99 = np.percentile(data, 99)
+#                 writer.writerow([label, f"{p50:.3f}", f"{p90:.3f}", f"{p99:.3f}"])
 
 def generate_plot(core_dir, op_dir, csv_files, output_root, logx=False):
     core = os.path.basename(core_dir)
