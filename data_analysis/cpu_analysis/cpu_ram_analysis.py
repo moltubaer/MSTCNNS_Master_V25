@@ -34,10 +34,9 @@ def plot_all_single_cpus(data, cpu_cols, outpath):
 def plot_ram(data, outpath):
     plt.figure(figsize=(14, 6))
     plt.plot(data['time'], data['mem_used_mb'], label='Memory Used (MB)', color='purple')
-    plt.plot(data['time'], data['mem_percent'], label='Memory Usage (%)', color='orange')
     plt.xlabel('Timestamp (s)')
-    plt.ylabel('Memory')
-    plt.title('RAM Usage Over Time')
+    plt.ylabel('Memory Used (MB)')
+    plt.title('RAM Usage Over Time (MB)')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
@@ -88,6 +87,10 @@ if __name__ == "__main__":
         data['time'] = pd.to_datetime(data['timestamp'], unit='s')
         data['rel_time'] = (data['time'] - data['time'].iloc[0]).dt.total_seconds()
         base_name = os.path.splitext(os.path.basename(csv_file))[0]
+
+        if data.empty:
+            print(f"[WARN] {csv_file} is empty, skipping.")
+            continue
 
         if args.mode == 'aggregated-cpu':
             out_png = os.path.join(args.output, f"{base_name}_{args.mode}.png")
